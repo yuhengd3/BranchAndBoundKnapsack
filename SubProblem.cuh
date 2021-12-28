@@ -6,6 +6,6 @@ struct SubProblem {
   double upperBound;
   double currentTotalProfit;
   double currentTotalWeight;
-}
+};
 
 #endif

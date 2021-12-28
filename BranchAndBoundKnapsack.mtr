@@ -27,7 +27,7 @@ Edge A5node -> A6node;
 Edge A6node -> A7node;
 Edge A7node -> SinkNode;
 
-NodeParam SubProblem::weights : unsigned int *;
-NodeParam SubProblem::profits : unsigned int *;
-NodeParam SubProblem::globalUpperBound : double;
-NodeParam SubProblem::globalBestSubProblem : SubProblem *;
+NodeParam A::weights : unsigned *;
+NodeParam A::profits : unsigned *;
+NodeParam A::globalUpperBound : double;
+NodeParam A::globalBestSubProblem : SubProblem *;
