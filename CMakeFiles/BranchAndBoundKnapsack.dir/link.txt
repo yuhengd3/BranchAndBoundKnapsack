@@ -1,0 +1,2 @@
+/opt/rh/gcc-toolset-9/root/usr/bin/ar qc libBranchAndBoundKnapsack.a CMakeFiles/BranchAndBoundKnapsack.dir/BranchAndBoundKnapsack_dev_combined.cu.o
+/opt/rh/gcc-toolset-9/root/usr/bin/ranlib libBranchAndBoundKnapsack.a

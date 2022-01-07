@@ -1,0 +1,1 @@
+/opt/rh/gcc-toolset-9/root/usr/bin/g++ CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o -o Knapsack  libBranchAndBoundKnapsack.a -lcuda -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/usr/local/cuda-11.1/targets/x86_64-linux/lib/stubs" -L"/usr/local/cuda-11.1/targets/x86_64-linux/lib"

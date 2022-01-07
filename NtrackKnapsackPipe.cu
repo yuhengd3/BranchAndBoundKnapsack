@@ -4,6 +4,7 @@ __MDECL__
 void BranchAndBoundKnapsack_dev::
 A<InputView>::run(SubProblem const & inputItem)
 {
-   
+  
+	   
 }
 
