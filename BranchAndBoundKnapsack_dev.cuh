@@ -4,7 +4,7 @@
 #include "BranchAndBoundKnapsack.cuh"
 
 #include "deviceCode/DeviceApp.cuh"
-#include "deviceCode/NodeFunction_Buffered.cuh"
+#include "deviceCode/NodeFunction_User.cuh"
 #include "deviceCode/NodeFunction_Sink.cuh"
 #include "deviceCode/Node_Source.cuh"
 #include "deviceCode/Node_Queue.cuh"
@@ -44,7 +44,7 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
    };
    
    template <typename InputView>
-   class A final : public Mercator::NodeFunction_Buffered<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A> {
+   class A final : public Mercator::NodeFunction_User<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A> {
    public:
       // enum defining output channels
       struct Out {
@@ -58,21 +58,21 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
         Mercator::RefCountedArena * parentArena,
         const BranchAndBoundKnapsack::AppParams* iappParams
        )
-         : Mercator::NodeFunction_Buffered<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>(
-                                                                                                   parentArena
-                                                                                                  ),
+         : Mercator::NodeFunction_User<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>(
+                                                                                               parentArena
+                                                                                              ),
          appParams(iappParams)
       {}
       
       __device__
-      void run(SubProblem const & inputItem);
+      void run(SubProblem const & inputItem, unsigned int nInputs);
       
    private:
       
-      using Mercator::NodeFunction_Buffered<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::getNumActiveThreads;
-      using Mercator::NodeFunction_Buffered<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::getThreadGroupSize;
-      using Mercator::NodeFunction_Buffered<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::isThreadGroupLeader;
-      using Mercator::NodeFunction_Buffered<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::push;
+      using Mercator::NodeFunction_User<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::getNumActiveThreads;
+      using Mercator::NodeFunction_User<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::getThreadGroupSize;
+      using Mercator::NodeFunction_User<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::isThreadGroupLeader;
+      using Mercator::NodeFunction_User<SubProblem, 1, InputView, THREADS_PER_BLOCK, 1, 128, A>::push;
       
       const BranchAndBoundKnapsack::AppParams* const appParams;
       
@@ -83,12 +83,12 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
    }; // end class A
    
    template <typename InputView>
-   class __MTR_SINK_12877600 final : public Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK> {
+   class __MTR_SINK_14410064 final : public Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK> {
    public:
       __device__
-      __MTR_SINK_12877600(
+      __MTR_SINK_14410064(
                           Mercator::RefCountedArena * parentArena,
-                          const BranchAndBoundKnapsack::__MTR_SINK_12877600::NodeParams* inodeParams,
+                          const BranchAndBoundKnapsack::__MTR_SINK_14410064::NodeParams* inodeParams,
                           const BranchAndBoundKnapsack::AppParams* iappParams
                          )
          : Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK>(
@@ -100,10 +100,10 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
       
    private:
       
-      const BranchAndBoundKnapsack::__MTR_SINK_12877600::NodeParams* const nodeParams;
+      const BranchAndBoundKnapsack::__MTR_SINK_14410064::NodeParams* const nodeParams;
       
       __device__
-      const BranchAndBoundKnapsack::__MTR_SINK_12877600::NodeParams* getParams() const
+      const BranchAndBoundKnapsack::__MTR_SINK_14410064::NodeParams* getParams() const
       { return nodeParams; }
       
       const BranchAndBoundKnapsack::AppParams* const appParams;
@@ -122,7 +122,7 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
          }
       }
       
-   }; // end class __MTR_SINK_12877600
+   }; // end class __MTR_SINK_14410064
    
 public:
    __device__
@@ -172,9 +172,9 @@ public:
       Mercator::Node_Queue<SubProblem, 1, 0, A> * dA7node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA6node, 0, 1024, dA7nodeFcn);
       assert(dA7node != nullptr);
       
-      __MTR_SINK_12877600<Mercator::Queue<SubProblem>>* dSinkNodeFcn = new __MTR_SINK_12877600<Mercator::Queue<SubProblem>>(nullptr, &params->n__MTR_SINK_12877600[0], &params->appParams);
+      __MTR_SINK_14410064<Mercator::Queue<SubProblem>>* dSinkNodeFcn = new __MTR_SINK_14410064<Mercator::Queue<SubProblem>>(nullptr, &params->n__MTR_SINK_14410064[0], &params->appParams);
       assert(dSinkNodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_12877600> * dSinkNode = new Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_12877600>(&scheduler, 0, 1, dA7node, 0, 1024, dSinkNodeFcn);
+      Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_14410064> * dSinkNode = new Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_14410064>(&scheduler, 0, 1, dA7node, 0, 1024, dSinkNodeFcn);
       assert(dSinkNode != nullptr);
       
       // construct the output channels for each node
@@ -182,56 +182,48 @@ public:
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA1node, dA1node->getQueue(), dA1node->getSignalQueue());
          assert(channel != nullptr);
          dA0node->setChannel(0, channel);
-         dA0nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA2node, dA2node->getQueue(), dA2node->getSignalQueue());
          assert(channel != nullptr);
          dA1node->setChannel(0, channel);
-         dA1nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA3node, dA3node->getQueue(), dA3node->getSignalQueue());
          assert(channel != nullptr);
          dA2node->setChannel(0, channel);
-         dA2nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA4node, dA4node->getQueue(), dA4node->getSignalQueue());
          assert(channel != nullptr);
          dA3node->setChannel(0, channel);
-         dA3nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA5node, dA5node->getQueue(), dA5node->getSignalQueue());
          assert(channel != nullptr);
          dA4node->setChannel(0, channel);
-         dA4nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA6node, dA6node->getQueue(), dA6node->getSignalQueue());
          assert(channel != nullptr);
          dA5node->setChannel(0, channel);
-         dA5nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA7node, dA7node->getQueue(), dA7node->getSignalQueue());
          assert(channel != nullptr);
          dA6node->setChannel(0, channel);
-         dA6nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       {
          Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dSinkNode, dSinkNode->getQueue(), dSinkNode->getSignalQueue());
          assert(channel != nullptr);
          dA7node->setChannel(0, channel);
-         dA7nodeFcn->initChannelBuffer<SubProblem>(0, 2);
       }
       
       

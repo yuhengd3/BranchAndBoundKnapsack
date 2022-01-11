@@ -173,7 +173,7 @@ Knapsack/CMakeFiles/BranchAndBoundKnapsack.dir/BranchAndBoundKnapsack_dev_combin
     /home/research/d.yuheng/m/mercator/runtime/instrumentation/device_timer.cuh \
     /home/research/d.yuheng/m/mercator/runtime/instrumentation/sched_counter.cuh \
     /home/research/d.yuheng/m/mercator/runtime/instrumentation/occ_counter.cuh \
-    /home/research/d.yuheng/m/mercator/runtime/deviceCode/NodeFunction_Buffered.cuh \
+    /home/research/d.yuheng/m/mercator/runtime/deviceCode/NodeFunction_User.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/NodeFunction.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/NodeBaseWithChannels.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/ChannelBase.cuh \
@@ -183,8 +183,7 @@ Knapsack/CMakeFiles/BranchAndBoundKnapsack.dir/BranchAndBoundKnapsack_dev_combin
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/Signal.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/ParentBuffer.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/Channel.cuh \
-    /home/research/d.yuheng/m/mercator/runtime/deviceCode/ChannelBuffer.cuh \
-    /home/research/d.yuheng/m/mercator/runtime/deviceCode/ChannelBufferBase.cuh \
+    /home/research/d.yuheng/m/mercator/runtime/deviceCode/timing_options.cuh \
     /home/research/d.yuheng/m/mercator/runtime/support/collective_ops.cuh \
     /usr/local/cuda-11.1/bin/../targets/x86_64-linux/include/cub/cub.cuh \
     /usr/local/cuda-11.1/bin/../targets/x86_64-linux/include/cub/config.cuh \
@@ -485,7 +484,6 @@ Knapsack/CMakeFiles/BranchAndBoundKnapsack.dir/BranchAndBoundKnapsack_dev_combin
     /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/unique_lock.h \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/NodeFunction_Sink.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/Node_Source.cuh \
-    /home/research/d.yuheng/m/mercator/runtime/deviceCode/timing_options.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/Node_Queue.cuh \
     /home/research/d.yuheng/m/mercator/runtime/deviceCode/Scheduler_impl.cuh \
     /home/research/d.yuheng/m/mercator/runtime/io/SourceBase.cuh \

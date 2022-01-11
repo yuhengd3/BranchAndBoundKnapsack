@@ -29,6 +29,8 @@ public:
       unsigned * weights;
       unsigned * profits;
       double globalUpperBound;
+      int maxCapacity;
+      int maxItems;
    };
    
    AppParams* getParams()
@@ -55,7 +57,7 @@ public:
       ModuleParams * const params;
    };
    
-   class __MTR_SINK_12877600 {
+   class __MTR_SINK_14410064 {
    public:
       struct ModuleParams {
       };
@@ -67,7 +69,7 @@ public:
       ModuleParams* getParams()
       { return params; }
       
-      __MTR_SINK_12877600(ModuleParams *iparams)
+      __MTR_SINK_14410064(ModuleParams *iparams)
        : params(iparams) {}
       
    private:
@@ -81,11 +83,11 @@ public:
          params->sinkData.bufferData = buffer.getData();
       }
       
-      SinkNode(__MTR_SINK_12877600::NodeParams *iparams)
+      SinkNode(__MTR_SINK_14410064::NodeParams *iparams)
        : params(iparams) {}
       
    private:
-      __MTR_SINK_12877600::NodeParams * const params;
+      __MTR_SINK_14410064::NodeParams * const params;
    };
    
    struct Params {
@@ -95,8 +97,8 @@ public:
       
       A::ModuleParams pA;
       A::NodeParams nA[8];
-      __MTR_SINK_12877600::ModuleParams p__MTR_SINK_12877600;
-      __MTR_SINK_12877600::NodeParams n__MTR_SINK_12877600[1];
+      __MTR_SINK_14410064::ModuleParams p__MTR_SINK_14410064;
+      __MTR_SINK_14410064::NodeParams n__MTR_SINK_14410064[1];
    };
    
 public:

@@ -143,8 +143,27 @@ int main() {
 	inBuffer.set(input, 1);
 
 	app.getParams()->globalUpperBound = 0.0;
-	app.getParams()->weights = weights;
-	app.getParams()->profits = profits;
+
+	unsigned * d_weights, * d_profits;
+	cudaError_t cudaStatus;
+	cudaStatus = cudaMalloc((void**) &d_weights, MAX_ITEMS * sizeof(unsigned));
+       	if (cudaStatus != cudaSuccess) {
+		std::cout << "cudaMalloc error" << std::endl;
+		cudaFree(d_weights);
+		return -1;
+	}
+
+	cudaStatus = cudaMalloc((void**) &d_profits, MAX_ITEMS * sizeof(unsigned));
+	if (cudaStatus != cudaSuccess) {
+		std::cout << "cudaMalloc error" << std::endl;
+		cudaFree((void*)d_profits);
+		return -1;
+	}
+
+	app.getParams()->weights = d_weights;
+	app.getParams()->profits = d_profits;
+	app.getParams()->maxCapacity = MAX_CAPACITY;
+	app.getParams()->maxItems = MAX_ITEMS;
 	
 
 	app.setSource(inBuffer);
@@ -152,13 +171,15 @@ int main() {
 
         app.run();
 
+        double updatedUpperBound = app.getParams()->globalUpperBound; 
+
 	unsigned int outsize = outBuffer.size();
 	std::cout << "got " << outsize << " " << std::endl;
+	std::cout << "upperBound: " << updatedUpperBound << std::endl;
         outBuffer.get(outputs, outsize);
 
-
-
-
+	cudaFree((void*)d_weights);
+	cudaFree((void*)d_profits);
         return 0;
 }
 

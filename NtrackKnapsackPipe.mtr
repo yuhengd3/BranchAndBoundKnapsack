@@ -5,6 +5,7 @@ reference "SubProblem.cuh";
 Application BranchAndBoundKnapsack;
 
 Module A : SubProblem -> SubProblem : 2;
+AllThreads A;
 
 Node A0node: A;
 Node A1node: A;
@@ -35,5 +36,5 @@ Edge A7node -> SinkNode;
 Param weights : unsigned *;
 Param profits : unsigned *;
 Param globalUpperBound : double;
-Param max_capacity : int;
-Param max_items : int;
+Param maxCapacity : int;
+Param maxItems : int;
