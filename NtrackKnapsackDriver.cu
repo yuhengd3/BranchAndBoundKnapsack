@@ -1,17 +1,21 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <stack>
+#include <vector>
+#include <algorithm>
+#include <iterator>
 
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 100000
-#define MAX_CAPACITY 10000
+#define MAX_ITEMS 1000
+#define MAX_CAPACITY 100
 #define HOST_MAX_ITEM 16
 
 double globalUpperBound = 0.0;
 
-double calcuateUpperBound(unsigned int currentItem, double currentWeight, double currentProfit, unsigned int* weights, unsigned int* profits) {
+double calculateUpperBound(unsigned int currentItem, double currentWeight, double currentProfit, unsigned int* weights, unsigned int* profits) {
 	double upperBoundProfit = currentProfit;
 	double upperBoundWeight = currentWeight;
 
@@ -83,42 +87,15 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 	profits[0] = 0;
 }
 
-void branch(SubProblem s, unsigned int* weights, unsigned int* profits) {
-	if(s.currentTotalWeight > MAX_CAPACITY) {
-		return;
-	}
-	if(s.upperBound < globalUpperBound) {
-		return;
-	}
-
-	//If we've reached a leaf node . . .
-	if(s.currentItem == MAX_ITEMS) {
-		double finalBranchCost = s.currentTotalProfit;
-		if(finalBranchCost > globalUpperBound) {
-			globalUpperBound = finalBranchCost;
-			// globalBestSubProblem = s;
+int findFirstRemaining(std::vector<SubProblem> repo[]) {
+	int index = MAX_ITEMS / 8;
+	index -= 1;
+	while (index >= 0) {
+		if (!repo[index].empty()) {
+			break;
 		}
-		return;
 	}
-
-	//if(s.storedItems[s.currentItem] == false) {
-		s.upperBound = calcuateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
-	//}
-
-	if (s.upperBound > globalUpperBound) {
-		
-		SubProblem nextLeft = s;	//Include next item
-		SubProblem nextRight = s;	//Exclude next item
-
-		nextLeft.currentItem += 1;
-		nextRight.currentItem += 1;
-
-		nextLeft.currentTotalProfit += profits[nextLeft.currentItem];
-		nextLeft.currentTotalWeight += weights[nextLeft.currentItem];
-
-		branch(nextLeft, weights, profits);
-		branch(nextRight, weights, profits);
-	}
+	return index;
 }
 
 int main() {
@@ -126,24 +103,29 @@ int main() {
 	unsigned int profits[MAX_ITEMS];
 
 	randomItems(weights, profits);
-        
-	SubProblem * input = new SubProblem();
-	input->currentItem = 0;
-	input->currentTotalProfit = 0;
-	input->currentTotalWeight = 0;
-        
-	unsigned int MAX_OUTPUTS = 1 << 8;
-	SubProblem * outputs = new SubProblem[MAX_OUTPUTS];
 
-	Mercator::Buffer<SubProblem> inBuffer(1);
-	Mercator::Buffer<SubProblem> outBuffer(MAX_OUTPUTS);
+	// std::stack<std::vector<SubProblem>> st;
+	std::vector<SubProblem> repo[MAX_ITEMS / 8] = {std::vector<SubProblem>()};	
+	SubProblem input;
+	input.currentItem = 0;
+	input.currentTotalProfit = 0;
+	input.currentTotalWeight = 0;
+	input.upperBound = calculateUpperBound(0, 0, 0, weights, profits);
 
-	BranchAndBoundKnapsack app;
-	
-	inBuffer.set(input, 1);
+	std::vector<SubProblem> & vec = repo[0];
+	vec.push_back(input);
+	// st.push_back(vec);
+       
+	unsigned int OUTPUTS_MULTIPLIER = 128; // (1 << 8);
+	unsigned int MAX_INPUT_ = 100000;
 
-	app.getParams()->globalUpperBound = 0.0;
+	unsigned int input_size;
+	unsigned int output_size;
+	SubProblem * input_ptr = NULL;
+	SubProblem * output_ptr = NULL;
+	std::vector<SubProblem> leafSubProblems;
 
+	// copy weights and profits to gpu memory
 	unsigned * d_weights, * d_profits;
 	cudaError_t cudaStatus;
 	cudaStatus = cudaMalloc((void**) &d_weights, MAX_ITEMS * sizeof(unsigned));
@@ -159,24 +141,64 @@ int main() {
 		cudaFree((void*)d_profits);
 		return -1;
 	}
+	int index = -1;
+	while ((index = findFirstRemaining(repo)) > -1) {
+		std::vector<SubProblem> & nextVec = repo[index];
+		if (nextVec.size() <= MAX_INPUT_) {
+			input_size = nextVec.size();
+			input_ptr = new SubProblem[input_size];
+			std::copy(nextVec.begin(), nextVec.end(), input_ptr);
+			// st.pop_back();
+			nextVec.clear();
+		} else {
+			input_size = MAX_INPUT_;
+			input_ptr = new SubProblem[input_size];
+			std::copy(nextVec.begin(), nextVec.begin()+MAX_INPUT_, input_ptr);
+			// delete from the start of the vector
+			nextVec.erase(nextVec.begin(), nextVec.begin()+MAX_INPUT_);
+		}
 
-	app.getParams()->weights = d_weights;
-	app.getParams()->profits = d_profits;
-	app.getParams()->maxCapacity = MAX_CAPACITY;
-	app.getParams()->maxItems = MAX_ITEMS;
+		output_size = input_size * OUTPUTS_MULTIPLIER;
+		output_ptr = new SubProblem[output_size];
+
+		Mercator::Buffer<SubProblem> inBuffer(input_size);
+		Mercator::Buffer<SubProblem> outBuffer(output_size);
+
+		BranchAndBoundKnapsack app;
 	
+		inBuffer.set(input_ptr, input_size);
 
-	app.setSource(inBuffer);
-	app.SinkNode.setSink(outBuffer);
+		app.getParams()->globalUpperBound = 0.0;
+		app.getParams()->weights = d_weights;
+		app.getParams()->profits = d_profits;
+		app.getParams()->maxCapacity = MAX_CAPACITY;
+		app.getParams()->maxItems = MAX_ITEMS;
 
-        app.run();
+		app.setSource(inBuffer);
+		app.SinkNode.setSink(outBuffer);
 
-        double updatedUpperBound = app.getParams()->globalUpperBound; 
+        	app.run();
 
-	unsigned int outsize = outBuffer.size();
-	std::cout << "got " << outsize << " " << std::endl;
-	std::cout << "upperBound: " << updatedUpperBound << std::endl;
-        outBuffer.get(outputs, outsize);
+        	// double updatedUpperBound = app.getParams()->globalUpperBound; 
+
+		unsigned int outsize = outBuffer.size();
+		// std::cout << "got " << outsize << " " << std::endl;
+		// std::cout << "upperBound: " << updatedUpperBound << std::endl;
+        	if (outsize != 0) {
+			outBuffer.get(output_ptr, outsize);
+			if (index == MAX_ITEMS / 8 - 1) {
+				// leaf
+				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(leafSubProblems));
+			} else {
+				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(repo[index]));
+			}
+		}
+		delete [] output_ptr;
+		delete [] input_ptr;
+
+	}
+
+	std::cout << "number of total outputs " << leafSubProblems.size() << std::endl;
 
 	cudaFree((void*)d_weights);
 	cudaFree((void*)d_profits);

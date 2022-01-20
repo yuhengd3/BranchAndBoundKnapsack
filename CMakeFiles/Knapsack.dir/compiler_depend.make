@@ -247,6 +247,29 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
   /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/ostream.tcc \
   /opt/rh/gcc-toolset-9/root/usr/include/c++/9/istream \
   /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/istream.tcc \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/stack \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/deque \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_construct.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_uninitialized.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_deque.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/deque.tcc \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_stack.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/uses_allocator.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/vector \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_vector.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_bvector.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/vector.tcc \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/algorithm \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/utility \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_relops.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_algo.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/algorithmfwd.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_heap.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_tempbuf.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/uniform_int_dist.h \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/limits \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/iterator \
+  /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stream_iterator.h \
   Knapsack/SubProblem.cuh \
   Knapsack/BranchAndBoundKnapsack.cuh \
   /home/research/d.yuheng/m/mercator/runtime/version.h \
@@ -262,6 +285,20 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
 /home/research/d.yuheng/m/mercator/runtime/io/Buffer.cuh:
 
 /home/research/d.yuheng/m/mercator/runtime/version.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_heap.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_algo.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/vector.tcc:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_vector.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_tempbuf.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_stack.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/stack:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/istream.tcc:
 
@@ -279,6 +316,8 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/locale_facets.h:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/limits:
+
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/streambuf.tcc:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/stdexcept:
@@ -294,6 +333,8 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/cassert:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/alloc_traits.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/uniform_int_dist.h:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/streambuf:
 
@@ -341,6 +382,10 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
 
 /usr/include/bits/stdint-uintn.h:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_bvector.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_uninitialized.h:
+
 /opt/rh/gcc-toolset-9/root/usr/lib/gcc/x86_64-redhat-linux/9/include/stdint.h:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/predefined_ops.h:
@@ -381,6 +426,8 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/concept_check.h:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/algorithmfwd.h:
+
 /usr/include/bits/types/struct_timeval.h:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/nested_exception.h:
@@ -406,6 +453,8 @@ Knapsack/CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o: Knapsack/NtrackKnaps
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/x86_64-redhat-linux/bits/os_defines.h:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/x86_64-redhat-linux/bits/c++config.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_relops.h:
 
 /usr/include/bits/types/struct_itimerspec.h:
 
@@ -467,9 +516,13 @@ Knapsack/NtrackKnapsackDriver.cu:
 
 /usr/include/bits/posix1_lim.h:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/utility:
+
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/functional_hash.h:
 
 /usr/include/bits/time.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/deque.tcc:
 
 /usr/local/cuda-11.1/targets/x86_64-linux/include/vector_types.h:
 
@@ -478,6 +531,8 @@ Knapsack/NtrackKnapsackDriver.cu:
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/cpp_type_traits.h:
 
 /usr/include/bits/xopen_lim.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/vector:
 
 /usr/include/bits/floatn.h:
 
@@ -536,6 +591,8 @@ Knapsack/NtrackKnapsackDriver.cu:
 /usr/include/stdint.h:
 
 /usr/include/limits.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_deque.h:
 
 /usr/local/cuda-11.1/targets/x86_64-linux/include/crt/math_functions.hpp:
 
@@ -619,6 +676,8 @@ Knapsack/NtrackKnapsackDriver.cu:
 
 /usr/include/endian.h:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/deque:
+
 /usr/include/bits/uintn-identity.h:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/ext/type_traits.h:
@@ -638,6 +697,8 @@ Knapsack/NtrackKnapsackDriver.cu:
 /usr/local/cuda-11.1/targets/x86_64-linux/include/crt/sm_70_rt.h:
 
 /usr/include/bits/thread-shared-types.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/uses_allocator.h:
 
 /usr/include/alloca.h:
 
@@ -681,11 +742,15 @@ Knapsack/SubProblem.cuh:
 
 /usr/include/bits/mathinline.h:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/iterator:
+
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/cstdint:
 
 /usr/local/cuda-11.1/targets/x86_64-linux/include/cuda_surface_types.h:
 
 /usr/local/cuda-11.1/targets/x86_64-linux/include/crt/device_functions.h:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stream_iterator.h:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/ios:
 
@@ -755,6 +820,8 @@ Knapsack/BranchAndBoundKnapsack.cuh:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/ostream:
 
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/bits/stl_construct.h:
+
 /usr/local/cuda-11.1/targets/x86_64-linux/include/sm_20_atomic_functions.h:
 
 /usr/local/cuda-11.1/targets/x86_64-linux/include/channel_descriptor.h:
@@ -762,5 +829,7 @@ Knapsack/BranchAndBoundKnapsack.cuh:
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/iosfwd:
 
 /opt/rh/gcc-toolset-9/root/usr/include/c++/9/cwchar:
+
+/opt/rh/gcc-toolset-9/root/usr/include/c++/9/algorithm:
 
 /usr/include/wchar.h:

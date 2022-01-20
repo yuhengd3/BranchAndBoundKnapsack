@@ -3,7 +3,6 @@ file(REMOVE_RECURSE
   "BranchAndBoundKnapsack_dev.cuh"
   "BranchAndBoundKnapsack_init.cu"
   "CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o"
-  "CMakeFiles/Knapsack.dir/NtrackKnapsackDriver.cu.o.d"
   "Knapsack"
   "Knapsack.pdb"
 )
