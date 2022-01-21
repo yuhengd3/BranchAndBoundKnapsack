@@ -25,6 +25,10 @@ __MDECL__
 void BranchAndBoundKnapsack_dev::
 A<InputView>::init()
 {
+        if (threadIdx.x == 0) {
+                getState()->nodeUpperBound = 0.0;
+        }
+
 
 }
 
@@ -35,11 +39,16 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 {
 	
 	unsigned int tid = threadIdx.x;
+
+	__shared__ double upperBounds[THREADS_PER_BLOCK];
+
 	if (tid == 0) {
-		getState()->nodeUpperBound = 0.0;
+		for (unsigned i = 0; i != nInputs; i++) {
+			upperBounds[i] = 0;
+		}
 	}
 
-	__shared__ double upperBounds[blockIdx.x] = {0};
+	__syncthreads();
 
 	auto appParams = getAppParams();
 	int toPush = 1;
@@ -78,9 +87,9 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 	if (tid == 0) {
 		double maximum = 0;
-		for (unsigned i = 0; i != blockDim.x; i++) {
+		for (unsigned i = 0; i != nInputs; i++) {
 			if (upperBounds[i] > maximum) {
-				maximum = upperbounds[i];
+				maximum = upperBounds[i];
 			}
 		}
 		getState()->nodeUpperBound = maximum;
@@ -88,25 +97,30 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 	__syncthreads();
 
-  	double inputUpperBound = 10000000;
+  	double inputUpperBound;
 	SubProblem nextLeft, nextRight;
 
 	if (toPush) {
 		inputUpperBound = calculateUpperBound(&inputItem, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 	}
 	
-	if (toPush && inputUpperBound > appParams->globalUpperBound) {
+	if (toPush && inputUpperBound > getState()->nodeUpperBound) {
 		nextLeft = inputItem;
 		nextRight = inputItem;
 		
 		nextLeft.currentItem += 1;
 		nextRight.currentItem += 1;
 
+		nextLeft.upperBound = inputUpperBound;
+		nextRight.upperBound = inputUpperBound;
+
 		nextLeft.currentTotalProfit += appParams->profits[nextLeft.currentItem];
 		nextLeft.currentTotalWeight += appParams->weights[nextLeft.currentItem];
 	} else {
 		toPush = 0;
 	}
+
+	__syncthreads();
 
 	push(nextLeft, toPush);
 	push(nextRight, toPush);

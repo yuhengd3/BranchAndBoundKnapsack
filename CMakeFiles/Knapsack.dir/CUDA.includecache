@@ -25,14 +25,6 @@ cstdlib
 -
 cmath
 -
-stack
--
-vector
--
-algorithm
--
-iterator
--
 SubProblem.cuh
 /home/research/d.yuheng/m/mercator/examples/Knapsack/SubProblem.cuh
 BranchAndBoundKnapsack.cuh

@@ -80,15 +80,28 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
       const BranchAndBoundKnapsack::AppParams* getAppParams() const
       { return appParams; }
       
+      struct NodeState {
+         double nodeUpperBound;
+      };
+      
+      __device__
+      NodeState* getState()
+      { return &state; }
+      
+      NodeState state;
+      
+      public:
+      __device__ void init(); // called once per block before run()
+      __device__ void cleanup(); // called once per block after run()
    }; // end class A
    
    template <typename InputView>
-   class __MTR_SINK_17682672 final : public Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK> {
+   class __MTR_SINK_12722640 final : public Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK> {
    public:
       __device__
-      __MTR_SINK_17682672(
+      __MTR_SINK_12722640(
                           Mercator::RefCountedArena * parentArena,
-                          const BranchAndBoundKnapsack::__MTR_SINK_17682672::NodeParams* inodeParams,
+                          const BranchAndBoundKnapsack::__MTR_SINK_12722640::NodeParams* inodeParams,
                           const BranchAndBoundKnapsack::AppParams* iappParams
                          )
          : Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK>(
@@ -100,10 +113,10 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
       
    private:
       
-      const BranchAndBoundKnapsack::__MTR_SINK_17682672::NodeParams* const nodeParams;
+      const BranchAndBoundKnapsack::__MTR_SINK_12722640::NodeParams* const nodeParams;
       
       __device__
-      const BranchAndBoundKnapsack::__MTR_SINK_17682672::NodeParams* getParams() const
+      const BranchAndBoundKnapsack::__MTR_SINK_12722640::NodeParams* getParams() const
       { return nodeParams; }
       
       const BranchAndBoundKnapsack::AppParams* const appParams;
@@ -122,7 +135,7 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
          }
       }
       
-   }; // end class __MTR_SINK_17682672
+   }; // end class __MTR_SINK_12722640
    
 public:
    __device__
@@ -139,89 +152,89 @@ public:
       
       A<Mercator::Queue<SubProblem>>* dA1nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA1nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA1node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA0node, 0, 1024, dA1nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA1node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA0node, 0, 1536, dA1nodeFcn);
       assert(dA1node != nullptr);
       
       A<Mercator::Queue<SubProblem>>* dA2nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA2nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA2node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA1node, 0, 1024, dA2nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA2node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA1node, 0, 1536, dA2nodeFcn);
       assert(dA2node != nullptr);
       
       A<Mercator::Queue<SubProblem>>* dA3nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA3nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA3node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA2node, 0, 1024, dA3nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA3node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA2node, 0, 1536, dA3nodeFcn);
       assert(dA3node != nullptr);
       
       A<Mercator::Queue<SubProblem>>* dA4nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA4nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA4node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA3node, 0, 1024, dA4nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA4node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA3node, 0, 1536, dA4nodeFcn);
       assert(dA4node != nullptr);
       
       A<Mercator::Queue<SubProblem>>* dA5nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA5nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA5node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA4node, 0, 1024, dA5nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA5node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA4node, 0, 1536, dA5nodeFcn);
       assert(dA5node != nullptr);
       
       A<Mercator::Queue<SubProblem>>* dA6nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA6nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA6node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA5node, 0, 1024, dA6nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA6node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA5node, 0, 1536, dA6nodeFcn);
       assert(dA6node != nullptr);
       
       A<Mercator::Queue<SubProblem>>* dA7nodeFcn = new A<Mercator::Queue<SubProblem>>(nullptr, &params->appParams);
       assert(dA7nodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA7node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA6node, 0, 1024, dA7nodeFcn);
+      Mercator::Node_Queue<SubProblem, 1, 0, A> * dA7node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA6node, 0, 1536, dA7nodeFcn);
       assert(dA7node != nullptr);
       
-      __MTR_SINK_17682672<Mercator::Queue<SubProblem>>* dSinkNodeFcn = new __MTR_SINK_17682672<Mercator::Queue<SubProblem>>(nullptr, &params->n__MTR_SINK_17682672[0], &params->appParams);
+      __MTR_SINK_12722640<Mercator::Queue<SubProblem>>* dSinkNodeFcn = new __MTR_SINK_12722640<Mercator::Queue<SubProblem>>(nullptr, &params->n__MTR_SINK_12722640[0], &params->appParams);
       assert(dSinkNodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_17682672> * dSinkNode = new Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_17682672>(&scheduler, 0, 1, dA7node, 0, 1024, dSinkNodeFcn);
+      Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_12722640> * dSinkNode = new Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_12722640>(&scheduler, 0, 1, dA7node, 0, 1536, dSinkNodeFcn);
       assert(dSinkNode != nullptr);
       
       // construct the output channels for each node
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA1node, dA1node->getQueue(), dA1node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA1node, dA1node->getQueue(), dA1node->getSignalQueue());
          assert(channel != nullptr);
          dA0node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA2node, dA2node->getQueue(), dA2node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA2node, dA2node->getQueue(), dA2node->getSignalQueue());
          assert(channel != nullptr);
          dA1node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA3node, dA3node->getQueue(), dA3node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA3node, dA3node->getQueue(), dA3node->getSignalQueue());
          assert(channel != nullptr);
          dA2node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA4node, dA4node->getQueue(), dA4node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA4node, dA4node->getQueue(), dA4node->getSignalQueue());
          assert(channel != nullptr);
          dA3node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA5node, dA5node->getQueue(), dA5node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA5node, dA5node->getQueue(), dA5node->getSignalQueue());
          assert(channel != nullptr);
          dA4node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA6node, dA6node->getQueue(), dA6node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA6node, dA6node->getQueue(), dA6node->getSignalQueue());
          assert(channel != nullptr);
          dA5node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dA7node, dA7node->getQueue(), dA7node->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dA7node, dA7node->getQueue(), dA7node->getSignalQueue());
          assert(channel != nullptr);
          dA6node->setChannel(0, channel);
       }
       
       {
-         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(256, false, dSinkNode, dSinkNode->getQueue(), dSinkNode->getSignalQueue());
+         Mercator::Channel<SubProblem>*channel = new Mercator::Channel<SubProblem>(384, false, dSinkNode, dSinkNode->getQueue(), dSinkNode->getSignalQueue());
          assert(channel != nullptr);
          dA7node->setChannel(0, channel);
       }
