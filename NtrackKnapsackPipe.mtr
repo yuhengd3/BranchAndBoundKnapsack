@@ -4,7 +4,7 @@ reference "SubProblem.cuh";
 
 Application BranchAndBoundKnapsack;
 
-Module A : SubProblem -> SubProblem : 2;
+Module A : SubProblem -> SubProblem : 3;
 AllThreads A;
 
 Node A0node: A;
@@ -38,3 +38,5 @@ Param profits : unsigned *;
 Param globalUpperBound : double;
 Param maxCapacity : int;
 Param maxItems : int;
+
+NodeState A::nodeUpperBound : double;

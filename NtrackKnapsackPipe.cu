@@ -23,32 +23,72 @@ double calculateUpperBound(const SubProblem * curr, unsigned int* weights, unsig
 
 __MDECL__
 void BranchAndBoundKnapsack_dev::
+A<InputView>::init()
+{
+
+}
+
+
+__MDECL__
+void BranchAndBoundKnapsack_dev::
 A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 {
+	
 	unsigned int tid = threadIdx.x;
+	if (tid == 0) {
+		getState()->nodeUpperBound = 0.0;
+	}
+
+	__shared__ double upperBounds[blockIdx.x] = {0};
+
 	auto appParams = getAppParams();
 	int toPush = 1;
 	if (toPush && tid >= nInputs) {
 		toPush = 0;
 	}
+	/*
+	SubProblem newInput = inputItem;
+	newInput.currentItem += 1;
+	push(newInput, toPush);
+	push(newInput, toPush);
+	push(newInput, toPush);
+	return;
+	*/
 
 	if (toPush && inputItem.currentTotalWeight > appParams->maxCapacity) {
 		toPush = 0;
 	}
 
-	if (toPush && inputItem.upperBound < appParams->globalUpperBound) {
+	if (toPush && inputItem.upperBound < getState()->nodeUpperBound) {
 		toPush = 0;
 	}
 
+
 	if (toPush && inputItem.currentItem == appParams->maxItems) {
 		double finalBranchCost = inputItem.currentTotalProfit;
-		if(finalBranchCost > appParams->globalUpperBound) {
+		upperBounds[tid] = finalBranchCost;
+		//if(finalBranchCost > appParams->globalUpperBound) {
 			// TODO: needs to be modifiable?
 			// appParams->globalUpperBound = finalBranchCost;
-		}
+
+		//}
 		toPush = 0;
 	}
-  	double inputUpperBound;
+	__syncthreads();
+
+	if (tid == 0) {
+		double maximum = 0;
+		for (unsigned i = 0; i != blockDim.x; i++) {
+			if (upperBounds[i] > maximum) {
+				maximum = upperbounds[i];
+			}
+		}
+		getState()->nodeUpperBound = maximum;
+	}
+
+	__syncthreads();
+
+  	double inputUpperBound = 10000000;
 	SubProblem nextLeft, nextRight;
 
 	if (toPush) {
@@ -64,9 +104,17 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 		nextLeft.currentTotalProfit += appParams->profits[nextLeft.currentItem];
 		nextLeft.currentTotalWeight += appParams->weights[nextLeft.currentItem];
+	} else {
+		toPush = 0;
 	}
 
 	push(nextLeft, toPush);
 	push(nextRight, toPush);
 }
 
+__MDECL__
+void BranchAndBoundKnapsack_dev::
+A<InputView>::cleanup()
+{
+
+}
