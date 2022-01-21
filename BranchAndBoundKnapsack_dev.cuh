@@ -96,12 +96,12 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
    }; // end class A
    
    template <typename InputView>
-   class __MTR_SINK_12722640 final : public Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK> {
+   class __MTR_SINK_23691728 final : public Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK> {
    public:
       __device__
-      __MTR_SINK_12722640(
+      __MTR_SINK_23691728(
                           Mercator::RefCountedArena * parentArena,
-                          const BranchAndBoundKnapsack::__MTR_SINK_12722640::NodeParams* inodeParams,
+                          const BranchAndBoundKnapsack::__MTR_SINK_23691728::NodeParams* inodeParams,
                           const BranchAndBoundKnapsack::AppParams* iappParams
                          )
          : Mercator::NodeFunction_Sink<SubProblem, InputView, THREADS_PER_BLOCK>(
@@ -113,10 +113,10 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
       
    private:
       
-      const BranchAndBoundKnapsack::__MTR_SINK_12722640::NodeParams* const nodeParams;
+      const BranchAndBoundKnapsack::__MTR_SINK_23691728::NodeParams* const nodeParams;
       
       __device__
-      const BranchAndBoundKnapsack::__MTR_SINK_12722640::NodeParams* getParams() const
+      const BranchAndBoundKnapsack::__MTR_SINK_23691728::NodeParams* getParams() const
       { return nodeParams; }
       
       const BranchAndBoundKnapsack::AppParams* const appParams;
@@ -135,7 +135,7 @@ class BranchAndBoundKnapsack_dev : public Mercator::DeviceApp<9,128,8192,5242880
          }
       }
       
-   }; // end class __MTR_SINK_12722640
+   }; // end class __MTR_SINK_23691728
    
 public:
    __device__
@@ -185,9 +185,9 @@ public:
       Mercator::Node_Queue<SubProblem, 1, 0, A> * dA7node = new Mercator::Node_Queue<SubProblem, 1, 0, A>(&scheduler, 0, 0, dA6node, 0, 1536, dA7nodeFcn);
       assert(dA7node != nullptr);
       
-      __MTR_SINK_12722640<Mercator::Queue<SubProblem>>* dSinkNodeFcn = new __MTR_SINK_12722640<Mercator::Queue<SubProblem>>(nullptr, &params->n__MTR_SINK_12722640[0], &params->appParams);
+      __MTR_SINK_23691728<Mercator::Queue<SubProblem>>* dSinkNodeFcn = new __MTR_SINK_23691728<Mercator::Queue<SubProblem>>(nullptr, &params->n__MTR_SINK_23691728[0], &params->appParams);
       assert(dSinkNodeFcn != nullptr);
-      Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_12722640> * dSinkNode = new Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_12722640>(&scheduler, 0, 1, dA7node, 0, 1536, dSinkNodeFcn);
+      Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_23691728> * dSinkNode = new Mercator::Node_Queue<SubProblem, 0, 0, __MTR_SINK_23691728>(&scheduler, 0, 1, dA7node, 0, 1536, dSinkNodeFcn);
       assert(dSinkNode != nullptr);
       
       // construct the output channels for each node

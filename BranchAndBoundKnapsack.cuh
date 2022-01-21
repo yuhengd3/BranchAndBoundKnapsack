@@ -57,7 +57,7 @@ public:
       ModuleParams * const params;
    };
    
-   class __MTR_SINK_12722640 {
+   class __MTR_SINK_23691728 {
    public:
       struct ModuleParams {
       };
@@ -69,7 +69,7 @@ public:
       ModuleParams* getParams()
       { return params; }
       
-      __MTR_SINK_12722640(ModuleParams *iparams)
+      __MTR_SINK_23691728(ModuleParams *iparams)
        : params(iparams) {}
       
    private:
@@ -83,11 +83,11 @@ public:
          params->sinkData.bufferData = buffer.getData();
       }
       
-      SinkNode(__MTR_SINK_12722640::NodeParams *iparams)
+      SinkNode(__MTR_SINK_23691728::NodeParams *iparams)
        : params(iparams) {}
       
    private:
-      __MTR_SINK_12722640::NodeParams * const params;
+      __MTR_SINK_23691728::NodeParams * const params;
    };
    
    struct Params {
@@ -97,8 +97,8 @@ public:
       
       A::ModuleParams pA;
       A::NodeParams nA[8];
-      __MTR_SINK_12722640::ModuleParams p__MTR_SINK_12722640;
-      __MTR_SINK_12722640::NodeParams n__MTR_SINK_12722640[1];
+      __MTR_SINK_23691728::ModuleParams p__MTR_SINK_23691728;
+      __MTR_SINK_23691728::NodeParams n__MTR_SINK_23691728[1];
    };
    
 public:

@@ -133,7 +133,7 @@ int main() {
 	input->currentTotalWeight = 0;
 	input->upperBound = calculateUpperBound(0, 0, 0, weights, profits);
         
-	unsigned int MAX_OUTPUTS = 1 << 8;
+	unsigned int MAX_OUTPUTS = 100000;
 	SubProblem * outputs = new SubProblem[MAX_OUTPUTS];
 
 	Mercator::Buffer<SubProblem> inBuffer(1);
@@ -148,6 +148,7 @@ int main() {
 	unsigned * d_weights, * d_profits;
 	cudaError_t cudaStatus;
 	cudaStatus = cudaMalloc((void**) &d_weights, MAX_ITEMS * sizeof(unsigned));
+	cudaMemcpy(d_weights, weights, MAX_ITEMS * sizeof(unsigned), cudaMemcpyHostToDevice);
        	if (cudaStatus != cudaSuccess) {
 		std::cout << "cudaMalloc error" << std::endl;
 		cudaFree(d_weights);
@@ -155,6 +156,7 @@ int main() {
 	}
 
 	cudaStatus = cudaMalloc((void**) &d_profits, MAX_ITEMS * sizeof(unsigned));
+	cudaMemcpy(d_profits, profits, MAX_ITEMS * sizeof(unsigned), cudaMemcpyHostToDevice);
 	if (cudaStatus != cudaSuccess) {
 		std::cout << "cudaMalloc error" << std::endl;
 		cudaFree((void*)d_profits);
