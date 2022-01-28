@@ -41,8 +41,8 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	
 	unsigned int tid = threadIdx.x;
 	if (tid < nInputs) {
-	printf("entered, currentItem: %d\n", inputItem.currentItem);
-	printf("weights[0], weights[1], profits[0], profits[1]: %f, %f, %f, %f\n", getAppParams()->weights[0], getAppParams()->weights[1], getAppParams()->profits[0], getAppParams()->profits[1]);
+	// printf("entered, currentItem: %d\n", inputItem.currentItem);
+	// printf("weights[0], weights[1], profits[0], profits[1]: %f, %f, %f, %f\n", getAppParams()->weights[0], getAppParams()->weights[1], getAppParams()->profits[0], getAppParams()->profits[1]);
 	}
 
 
@@ -73,17 +73,17 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 	if (toPush && inputItem.currentTotalWeight > appParams->maxCapacity) {
 		toPush = 0;
-		printf("currentTotalWeight, currentitem is %d \n", inputItem.currentItem);
+		// printf("currentTotalWeight, currentitem is %d \n", inputItem.currentItem);
 	}
 
 	if (toPush && inputItem.upperBound < getState()->nodeUpperBound) {
 		toPush = 0;
-		printf("hi my upperBound is %lf, currentItem is %d \n", inputItem.upperBound, inputItem.currentItem);
+		// printf("hi my upperBound is %lf, currentItem is %d \n", inputItem.upperBound, inputItem.currentItem);
 	}
 
 
 	if (toPush && inputItem.currentItem == appParams->maxItems) {
-		printf("maxItems reached\n");
+		// printf("maxItems reached\n");
 		double finalBranchCost = inputItem.currentTotalProfit;
 		upperBounds[tid] = finalBranchCost;
 		//if(finalBranchCost > appParams->globalUpperBound) {
@@ -93,7 +93,6 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		//}
 		toPush = 0;
 	}
-	/*
 	__syncthreads();
 
 	if (tid == 0) {
@@ -105,18 +104,18 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		}
 		// getState()->nodeUpperBound = maximum;
 		getState()->nodeUpperBound = 0;
-	}*/
+	}
 
-	// __syncthreads();
+	__syncthreads();
 
   	double inputUpperBound;
 	SubProblem nextLeft, nextRight;
 
 	if (toPush) {
-		printf("calculating upperBound\n");
+		// printf("calculating upperBound\n");
 		inputUpperBound = calculateUpperBound(&inputItem, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 	}
-	if (toPush) printf("inputUpperBound: %f, nodeUpperBound: %f\n", inputUpperBound, getState()->nodeUpperBound);	
+	// if (toPush) printf("inputUpperBound: %f, nodeUpperBound: %f\n", inputUpperBound, getState()->nodeUpperBound);	
 	if (toPush && inputUpperBound > getState()->nodeUpperBound) {
 		nextLeft = inputItem;
 		nextRight = inputItem;
