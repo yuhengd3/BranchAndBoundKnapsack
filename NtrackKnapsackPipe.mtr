@@ -35,8 +35,8 @@ Edge A7node -> SinkNode;
 
 Param weights : unsigned *;
 Param profits : unsigned *;
-Param globalUpperBound : double;
+Param globalLowerBound : double;
 Param maxCapacity : int;
 Param maxItems : int;
 
-NodeState A::nodeUpperBound : double;
+NodeState A::nodeLowerBound : double;

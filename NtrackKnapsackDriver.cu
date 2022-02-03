@@ -15,14 +15,14 @@
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
 unsigned int MAX_INPUT_ = 200000;
 unsigned int HOST_MAX_LEVEL = 16;
-double globalUpperBound = 0;
+double globalLowerBound = 0;
 
 double calculateUpperBound(unsigned int currentItem, double currentWeight, double currentProfit, unsigned int* weights, unsigned int* profits) {
 	double upperBoundProfit = currentProfit;
 	double upperBoundWeight = currentWeight;
 
 	unsigned int i = currentItem + 1;
-	while (upperBoundWeight + weights[i] < MAX_CAPACITY && i < MAX_ITEMS) {
+	while (i < MAX_ITEMS && upperBoundWeight + weights[i] < MAX_CAPACITY) {
 		upperBoundProfit += profits[i];
 		upperBoundWeight += weights[i];
 		++i;
@@ -110,25 +110,11 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 		return;
 	}
 
-	//Sub-problem does not do better than current globalUpperBound
-	if(s.upperBound < globalUpperBound) {
+	//Sub-problem does not do better than current globalLowerBound
+	if(s.upperBound < globalLowerBound) {
 		//cout << "Upper bound lower than current best . . ." << endl;
 		return;
 	}
-
-	//If we've reached a leaf node . . .
-	/*
-	if(s.currentItem == MAX_ITEMS) {
-		double finalBranchCost = s.currentTotalProfit;
-		if(finalBranchCost > globalUpperBound) {
-			globalUpperBound = finalBranchCost;
-			// globalBestSubProblem = s;
-
-			//cout << "New Best Branch Profit: " << finalBranchCost << endl;
-		}
-		return;
-	}
-	*/
 
 	//NOTE: WE DON'T STORE WHICH BRANCH THIS IS, SO WE JUST GO AHEAD AND RECALCULATE
 	//THE UPPER BOUND EVERY TIME.  IF WE TRACKED IT, THEN WE COULD RECALCUATE FOR EVERY
@@ -137,7 +123,7 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 		s.upperBound = calculateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
 	//}
 
-	if(s.upperBound > globalUpperBound) {
+	if(s.upperBound > globalLowerBound) {
 		SubProblem nextLeft = s;	//Include next item
 		SubProblem nextRight = s;	//Exclude next item
 
@@ -146,15 +132,23 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 
 		nextLeft.currentTotalProfit += profits[nextLeft.currentItem];
 		nextLeft.currentTotalWeight += weights[nextLeft.currentItem];
-		if (nextLeft.currentItem < HOST_MAX_LEVEL) {
-			
-			//cout << endl << "Left Branch. . . " << endl;
-			branch(nextLeft, weights, profits, repo);
-			//cout << endl << "Right Branch. . . " << endl;
-			branch(nextRight, weights, profits, repo);
-		} else {
-			repo[HOST_MAX_LEVEL / 8].push_back(nextLeft);
-			repo[HOST_MAX_LEVEL / 8].push_back(nextRight);
+
+		nextLeft.upperBound = calculateUpperBound(nextLeft.currentItem, nextLeft.currentTotalWeight, nextLeft.currentTotalProfit, weights, profits);
+		nextRight.upperBound = calculateUpperBound(nextRight.currentItem, nextRight.currentTotalWeight, nextRight.currentTotalProfit, weights, profits);
+
+	 	if (nextLeft.upperBound > globalLowerBound) {	
+			if (nextLeft.currentItem < HOST_MAX_LEVEL) {
+				branch(nextLeft, weights, profits, repo);
+			} else {
+				repo[HOST_MAX_LEVEL / 8].push_back(nextLeft);
+			}
+		}	
+		if (nextRight.upperBound > globalLowerBound) {
+		       	if (nextRight.currentItem < HOST_MAX_LEVEL) {
+		       		branch(nextRight, weights, profits, repo);
+		 	} else {
+				repo[HOST_MAX_LEVEL / 8].push_back(nextRight);
+			}	
 		}
 	}
 }
@@ -166,17 +160,13 @@ int main() {
 
 	randomItems(weights, profits);
 
-	// std::stack<std::vector<SubProblem>> st;
 	std::vector<SubProblem> repo[MAX_ITEMS / 8] = {std::vector<SubProblem>()};	
 	SubProblem input;
 	input.currentItem = 0;
 	input.currentTotalProfit = 0;
 	input.currentTotalWeight = 0;
 	input.upperBound = calculateUpperBound(0, 0, 0, weights, profits);
-	std::cout << "upperBound " << input.upperBound << std::endl;
-
-	// std::vector<SubProblem> & vec = repo[0];
-	// vec.push_back(input);
+	// std::cout << "upperBound " << input.upperBound << std::endl;
 
 	branch(input, weights, profits, repo);
        
@@ -213,7 +203,6 @@ int main() {
 			input_size = nextVec.size();
 			input_ptr = new SubProblem[input_size];
 			std::copy(nextVec.begin(), nextVec.end(), input_ptr);
-			// st.pop_back();
 			nextVec.clear();
 		} else {
 			input_size = MAX_INPUT_;
@@ -234,7 +223,7 @@ int main() {
 	
 		inBuffer.set(input_ptr, input_size);
 
-		app.getParams()->globalUpperBound = 0.0;
+		app.getParams()->globalLowerBound = globalLowerBound;
 		// app.getParams()->weights = d_weights;
 		// app.getParams()->profits = d_profits;
 		app.getParams()->maxCapacity = MAX_CAPACITY;
@@ -266,7 +255,6 @@ int main() {
 
         	app.run();
 
-        	// double updatedUpperBound = app.getParams()->globalUpperBound; 
 		unsigned int outsize = outBuffer.size();
 		std::cout << "got " << outsize << " outputs " << std::endl;
 		// std::cout << "upperBound: " << updatedUpperBound << std::endl;
@@ -274,24 +262,31 @@ int main() {
 			outBuffer.get(output_ptr, outsize);
 			if (index == MAX_ITEMS / 8 - 1) {
 				// leaf
-				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(leafSubProblems));
+				// std::copy(output_ptr, output_ptr + outsize, std::back_inserter(leafSubProblems));
+				
+				// update global lower boud;
+				for (size_t a = 0; a != outsize; a++) {
+					if (output_ptr[a].upperBound > globalLowerBound) {
+						globalLowerBound = output_ptr[a].upperBound;
+					}
+				}
+
 			} else {
 				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(repo[index + 1]));
 			}
 		}
 
-		std::cout << "currentItem  " << output_ptr[0].currentItem << std::endl;
+		// std::cout << "currentItem  " << output_ptr[0].currentItem << std::endl;
 		delete [] output_ptr;
 		delete [] input_ptr;
 			
 		cudaFree((void*)d_weights);
 		cudaFree((void*)d_profits);
 		
-		// std::cout << "pipeline done" << std::endl;
-		// if (output_ptr[0].currentItem == 32) { return 0; }
 
 	}
-
+	
+	/*
 	std::cout << "number of total outputs " << leafSubProblems.size() << std::endl;
 	double maximum_value = 0;
 	for (size_t i = 0; i != leafSubProblems.size(); i++) {
@@ -300,8 +295,9 @@ int main() {
 			maximum_value = s.currentTotalProfit;
 		}
 	}
+	*/
 
-	std::cout << "max profit: " << maximum_value << std::endl;
+	std::cout << "max profit: " << globalLowerBound << std::endl;
 
 	/*
 	cudaFree((void*)d_weights);

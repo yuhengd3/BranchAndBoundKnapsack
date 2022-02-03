@@ -27,7 +27,7 @@ void BranchAndBoundKnapsack_dev::
 A<InputView>::init()
 {
         if (threadIdx.x == 0) {
-                getState()->nodeUpperBound = 0.0;
+                getState()->nodeLowerBound = getAppParams()->globalLowerBound;
         }
 
 
@@ -40,102 +40,54 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 {
 	
 	unsigned int tid = threadIdx.x;
-	if (tid < nInputs) {
-	// printf("entered, currentItem: %d\n", inputItem.currentItem);
-	// printf("weights[0], weights[1], profits[0], profits[1]: %f, %f, %f, %f\n", getAppParams()->weights[0], getAppParams()->weights[1], getAppParams()->profits[0], getAppParams()->profits[1]);
-	}
-
 
 	__shared__ double upperBounds[THREADS_PER_BLOCK];
-
-	if (tid == 0) {
-		for (unsigned i = 0; i != nInputs; i++) {
-			upperBounds[i] = 0;
-		}
-	}
-
-	__syncthreads();
 
 	auto appParams = getAppParams();
 	int toPush = 1;
 	if (toPush && tid >= nInputs) {
 		toPush = 0;
 	}
-	/*	
-	SubProblem newInput = inputItem;
-	newInput.currentItem += 1;
-	push(newInput, toPush);
-	push(newInput, toPush);
-	push(newInput, toPush);
-	return;
-	*/
-	
 
 	if (toPush && inputItem.currentTotalWeight > appParams->maxCapacity) {
 		toPush = 0;
-		// printf("currentTotalWeight, currentitem is %d \n", inputItem.currentItem);
 	}
 
-	if (toPush && inputItem.upperBound < getState()->nodeUpperBound) {
-		toPush = 0;
-		// printf("hi my upperBound is %lf, currentItem is %d \n", inputItem.upperBound, inputItem.currentItem);
-	}
-
-
-	if (toPush && inputItem.currentItem == appParams->maxItems) {
-		// printf("maxItems reached\n");
-		double finalBranchCost = inputItem.currentTotalProfit;
-		upperBounds[tid] = finalBranchCost;
-		//if(finalBranchCost > appParams->globalUpperBound) {
-			// TODO: needs to be modifiable?
-			// appParams->globalUpperBound = finalBranchCost;
-
-		//}
+	if (toPush && inputItem.upperBound <= getState()->nodeLowerBound) {
 		toPush = 0;
 	}
-	__syncthreads();
-
-	if (tid == 0) {
-		double maximum = 0;
-		for (unsigned i = 0; i != nInputs; i++) {
-			if (upperBounds[i] > maximum) {
-				maximum = upperBounds[i];
-			}
-		}
-		// getState()->nodeUpperBound = maximum;
-		getState()->nodeUpperBound = 0;
-	}
-
-	__syncthreads();
 
   	double inputUpperBound;
-	SubProblem nextLeft, nextRight;
+	SubProblem leftSub, rightSub;
+	int pushLeft = 0, pushRight = 0;
 
 	if (toPush) {
-		// printf("calculating upperBound\n");
 		inputUpperBound = calculateUpperBound(&inputItem, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 	}
-	// if (toPush) printf("inputUpperBound: %f, nodeUpperBound: %f\n", inputUpperBound, getState()->nodeUpperBound);	
-	if (toPush && inputUpperBound > getState()->nodeUpperBound) {
-		nextLeft = inputItem;
-		nextRight = inputItem;
+	if (toPush && inputUpperBound > getState()->nodeLowerBound) {
+		leftSub = inputItem;
+		rightSub = inputItem;
 		
-		nextLeft.currentItem += 1;
-		nextRight.currentItem += 1;
+		leftSub.currentItem += 1;
+		rightSub.currentItem += 1;
 
-		nextLeft.upperBound = inputUpperBound;
-		nextRight.upperBound = inputUpperBound;
+		leftSub.currentTotalProfit += appParams->profits[leftSub.currentItem];
+		leftSub.currentTotalWeight += appParams->weights[leftSub.currentItem];
 
-		nextLeft.currentTotalProfit += appParams->profits[nextLeft.currentItem];
-		nextLeft.currentTotalWeight += appParams->weights[nextLeft.currentItem];
-	} else {
-		toPush = 0;
+		leftSub.upperBound = calculateUpperBound(&leftSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
+		if (leftSub.upperBound > getState()->nodeLowerBound) {
+			pushLeft = 1;
+		}
+		rightSub.upperBound = calculateUpperBound(&rightSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
+		if (rightSub.upperBound > getState()->nodeLowerBound) {
+			pushRight = 1;
+		}
 	}
 
 	__syncthreads();
 
-	push(nextLeft, toPush);
-	push(nextRight, toPush);
+	push(leftSub, pushLeft);
+	push(rightSub, pushRight);
 }
 
 __MDECL__
