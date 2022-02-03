@@ -9,13 +9,26 @@
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 96
-#define MAX_CAPACITY 10
+#define MAX_ITEMS 960
+#define MAX_CAPACITY 100
 #define HOST_MAX_ITEM 16
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
 unsigned int MAX_INPUT_ = 200000;
 unsigned int HOST_MAX_LEVEL = 16;
 double globalLowerBound = 0;
+
+double calculateInitialLowerBound(unsigned int * weights, unsigned int * profits) {
+	double currProfit = 0;
+	double currWeight = 0;
+
+	for (unsigned i = 1; i != MAX_ITEMS; i++) {
+		if (currWeight + weights[i] <= MAX_CAPACITY) {
+			currWeight += weights[i];
+			currProfit += profits[i];
+		}
+	}
+	return currProfit;
+}
 
 double calculateUpperBound(unsigned int currentItem, double currentWeight, double currentProfit, unsigned int* weights, unsigned int* profits) {
 	double upperBoundProfit = currentProfit;
@@ -159,6 +172,9 @@ int main() {
 	unsigned int profits[MAX_ITEMS];
 
 	randomItems(weights, profits);
+
+	globalLowerBound = calculateInitialLowerBound(weights, profits);
+	std::cout << "initial global lower bound: " << globalLowerBound << std::endl;
 
 	std::vector<SubProblem> repo[MAX_ITEMS / 8] = {std::vector<SubProblem>()};	
 	SubProblem input;
