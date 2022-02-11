@@ -29,8 +29,6 @@ A<InputView>::init()
         if (threadIdx.x == 0) {
                 getState()->nodeLowerBound = getAppParams()->globalLowerBound;
         }
-
-
 }
 
 
@@ -41,14 +39,22 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	
 	unsigned int tid = threadIdx.x;
 
-	__shared__ double upperBounds[THREADS_PER_BLOCK];
+	__shared__ double lowerBounds[THREADS_PER_BLOCK];
+
+	__syncthreads();
+	if (tid == 0) {
+		for (int i = 0; i != nInputs; i++) {
+			lowerBounds[i] = getState()->nodeLowerBound;
+		}
+	}
+	__syncthreads();
 
 	auto appParams = getAppParams();
 	int toPush = 1;
 	if (toPush && tid >= nInputs) {
 		toPush = 0;
 	}
-
+	/*
 	if (toPush && inputItem.currentTotalWeight > appParams->maxCapacity) {
 		toPush = 0;
 	}
@@ -56,15 +62,16 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	if (toPush && inputItem.upperBound <= getState()->nodeLowerBound) {
 		toPush = 0;
 	}
+	*/
 
-  	double inputUpperBound;
+  	// double inputUpperBound;
 	SubProblem leftSub, rightSub;
 	int pushLeft = 0, pushRight = 0;
 
-	if (toPush) {
-		inputUpperBound = calculateUpperBound(&inputItem, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
-	}
-	if (toPush && inputUpperBound > getState()->nodeLowerBound) {
+	// if (toPush) {
+	//		inputUpperBound = calculateUpperBound(&inputItem, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
+	// }
+	if (toPush && inputItem.upperBound > getState()->nodeLowerBound) {
 		leftSub = inputItem;
 		rightSub = inputItem;
 		
@@ -75,15 +82,33 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		leftSub.currentTotalWeight += appParams->weights[leftSub.currentItem];
 
 		leftSub.upperBound = calculateUpperBound(&leftSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
-		if (leftSub.upperBound > getState()->nodeLowerBound) {
+		if (leftSub.currentTotalWeight <= appParams->maxCapacity && leftSub.upperBound > getState()->nodeLowerBound) {
 			pushLeft = 1;
+			if (leftSub.currentItem == appParams->maxItems && leftSub.currentTotalWeight > lowerBounds[tid]) {
+				lowerBounds[tid] = leftSub.currentTotalWeight;
+			}
 		}
+
 		rightSub.upperBound = calculateUpperBound(&rightSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 		if (rightSub.upperBound > getState()->nodeLowerBound) {
 			pushRight = 1;
+			if (rightSub.currentItem == appParams->maxItems && rightSub.currentTotalWeight > lowerBounds[tid]) {
+				lowerBounds[tid] = rightSub.currentTotalWeight;
+			}
 		}
 	}
 
+	__syncthreads();
+	
+	if (tid == 0) {
+		double maximum = getState()->nodeLowerBound;
+		for (int i = 0; i != nInputs; i++) {
+			if (lowerBounds[i] > maximum) {
+				maximum = lowerBounds[i];
+			}
+		}
+		getState()->nodeLowerBound = maximum;
+	}
 	__syncthreads();
 
 	push(leftSub, pushLeft);
