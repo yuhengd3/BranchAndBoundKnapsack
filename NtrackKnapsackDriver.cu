@@ -9,8 +9,8 @@
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 960
-#define MAX_CAPACITY 100
+#define MAX_ITEMS 100000
+#define MAX_CAPACITY 10000
 #define HOST_MAX_ITEM 16
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
 unsigned int MAX_INPUT_ = 200000;
@@ -182,7 +182,6 @@ int main() {
 	input.currentTotalProfit = 0;
 	input.currentTotalWeight = 0;
 	input.upperBound = calculateUpperBound(0, 0, 0, weights, profits);
-	// std::cout << "upperBound " << input.upperBound << std::endl;
 
 	branch(input, weights, profits, repo);
        
@@ -191,6 +190,8 @@ int main() {
 	SubProblem * input_ptr = NULL;
 	SubProblem * output_ptr = NULL;
 	std::vector<SubProblem> leafSubProblems;
+	unsigned int num_blocks = 0;
+	double * block_bounds = NULL;
 
 	// copy weights and profits to gpu memory
 	/*
@@ -239,11 +240,25 @@ int main() {
 	
 		inBuffer.set(input_ptr, input_size);
 
-		app.getParams()->globalLowerBound = globalLowerBound;
+		// app.getParams()->globalLowerBound = globalLowerBound;
 		// app.getParams()->weights = d_weights;
 		// app.getParams()->profits = d_profits;
 		app.getParams()->maxCapacity = MAX_CAPACITY;
 		app.getParams()->maxItems = MAX_ITEMS;
+		
+		// TODO
+		if (num_blocks == 0) {
+			num_blocks = app.getNBlocks();
+			block_bounds = (double*) calloc(num_blocks, sizeof(double));
+		}
+		app.getParams()->numBlocks = num_blocks;
+		for (unsigned i = 0; i != num_blocks; i++) {
+			block_bounds[i] = globalLowerBound;
+		}
+		double * d_blockLowerBounds;
+		cudaMalloc((void**) &d_blockLowerBounds, num_blocks * sizeof(double));
+		cudaMemcpy(d_blockLowerBounds, block_bounds, num_blocks * sizeof(double), cudaMemcpyHostToDevice); 
+		app.getParams()->blockLowerBounds = d_blockLowerBounds;
 
 		unsigned * d_weights, * d_profits;
 		cudaError_t cudaStatus;
@@ -298,22 +313,14 @@ int main() {
 			
 		cudaFree((void*)d_weights);
 		cudaFree((void*)d_profits);
-		
+		cudaFree((void*)d_blockLowerBounds);
 
 	}
 	
-	/*
-	std::cout << "number of total outputs " << leafSubProblems.size() << std::endl;
-	double maximum_value = 0;
-	for (size_t i = 0; i != leafSubProblems.size(); i++) {
-		SubProblem & s = leafSubProblems[i];
-		if (maximum_value < s.currentTotalProfit) {
-			maximum_value = s.currentTotalProfit;
-		}
-	}
-	*/
 
 	std::cout << "max profit: " << globalLowerBound << std::endl;
+
+	free(block_bounds);
 
 	/*
 	cudaFree((void*)d_weights);
