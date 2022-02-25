@@ -85,17 +85,19 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 		leftSub.upperBound = calculateUpperBound(&leftSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 		if (leftSub.currentTotalWeight <= appParams->maxCapacity && leftSub.upperBound > findRealGlobalLowerBound(appParams)) {
-			pushLeft = 1;
 			if (leftSub.currentItem == appParams->maxItems && leftSub.currentTotalWeight > lowerBounds[tid]) {
 				lowerBounds[tid] = leftSub.currentTotalWeight;
+			} else if (leftSub.currentItem != appParams->maxItems) {
+				pushLeft = 1;
 			}
 		}
 
 		rightSub.upperBound = calculateUpperBound(&rightSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 		if (rightSub.upperBound > findRealGlobalLowerBound(appParams)) {
-			pushRight = 1;
 			if (rightSub.currentItem == appParams->maxItems && rightSub.currentTotalWeight > lowerBounds[tid]) {
 				lowerBounds[tid] = rightSub.currentTotalWeight;
+			} else if (rightSub.currentItem != appParams->maxItems) {
+				pushRight = 1;
 			}
 		}
 	}
