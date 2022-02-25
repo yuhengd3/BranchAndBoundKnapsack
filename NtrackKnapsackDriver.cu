@@ -9,8 +9,8 @@
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 100000
-#define MAX_CAPACITY 10000
+#define MAX_ITEMS 10000
+#define MAX_CAPACITY 1000
 #define HOST_MAX_ITEM 16
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
 unsigned int MAX_INPUT_ = 200000;
@@ -246,7 +246,6 @@ int main() {
 		app.getParams()->maxCapacity = MAX_CAPACITY;
 		app.getParams()->maxItems = MAX_ITEMS;
 		
-		// TODO
 		if (num_blocks == 0) {
 			num_blocks = app.getNBlocks();
 			block_bounds = (double*) calloc(num_blocks, sizeof(double));
@@ -288,17 +287,22 @@ int main() {
 
 		unsigned int outsize = outBuffer.size();
 		std::cout << "got " << outsize << " outputs " << std::endl;
-		// std::cout << "upperBound: " << updatedUpperBound << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
 			if (index == MAX_ITEMS / 8 - 1) {
 				// leaf
-				// std::copy(output_ptr, output_ptr + outsize, std::back_inserter(leafSubProblems));
-				
 				// update global lower boud;
+				/*
 				for (size_t a = 0; a != outsize; a++) {
 					if (output_ptr[a].upperBound > globalLowerBound) {
 						globalLowerBound = output_ptr[a].upperBound;
+					}
+				}
+				*/
+				cudaMemcpy(block_bounds, d_blockLowerBounds, num_blocks * sizeof(double), cudaMemcpyDeviceToHost);
+				for (size_t a = 0; a != num_blocks; a++) {
+					if (block_bounds[a] > globalLowerBound) {
+						globalLowerBound = block_bounds[a];
 					}
 				}
 
