@@ -1,15 +1,25 @@
 #include "BranchAndBoundKnapsack_dev.cuh"
 
+// #include <math.h>
+
 __device__
-double findRealGlobalLowerBound(const BranchAndBoundKnapsack::AppParams * appParams) {
-	unsigned nBlocks = appParams->numBlocks;
-	double global = 0;
-	for (unsigned i = 0; i != nBlocks; i++) {
-		if (global < appParams->blockLowerBounds[i]) {
-			global = appParams->blockLowerBounds[i];
+void findRealGlobalLowerBound(double * arr, size_t sz) {
+	// size_t iter = log2(sz - 1) + 1;
+	size_t half_sz;
+
+	while (true) {
+		__syncthreads();
+		half_sz = (sz+1) / 2;
+		if (threadIdx.x < sz / 2) {
+			if (arr[threadIdx.x] < arr[threadIdx.x + half_sz]) {
+				arr[threadIdx.x] = arr[threadIdx.x + half_sz];
+			}
+		}
+		sz = half_sz;
+		if (sz == 1) {
+			break;
 		}
 	}
-	return global;
 }
 
 __device__
@@ -33,19 +43,6 @@ double calculateUpperBound(const SubProblem * curr, unsigned int* weights, unsig
 
 	return upperBoundProfit;
 }
-/*
-__MDECL__
-void BranchAndBoundKnapsack_dev::
-A<InputView>::init()
-{
-        if (threadIdx.x == 0) {
-                // getState()->nodeLowerBound = getAppParams()->globalLowerBound;
-		// printf("blockLowerBound: %f\n", getAppParams()->blockLowerBounds[0]);
-		// printf("blockid:%d\n", blockIdx.x);
-        }
-}
-*/
-
 
 __MDECL__
 void BranchAndBoundKnapsack_dev::
@@ -72,8 +69,17 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 	SubProblem leftSub, rightSub;
 	int pushLeft = 0, pushRight = 0;
+	// __shared__ double block_bounds[appParams->numBlocks];
+	__shared__ double block_bounds[400];
+	memcpy(block_bounds, appParams->blockLowerBounds, sizeof(double) * appParams->numBlocks);
 
-	if (toPush && inputItem.upperBound > findRealGlobalLowerBound(appParams)) {
+	findRealGlobalLowerBound(block_bounds, appParams->numBlocks);
+	__syncthreads();
+
+
+	double realGLB = block_bounds[0];
+
+	if (toPush && inputItem.upperBound > realGLB) {
 		leftSub = inputItem;
 		rightSub = inputItem;
 		
@@ -84,7 +90,7 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		leftSub.currentTotalWeight += appParams->weights[leftSub.currentItem];
 
 		leftSub.upperBound = calculateUpperBound(&leftSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
-		if (leftSub.currentTotalWeight <= appParams->maxCapacity && leftSub.upperBound > findRealGlobalLowerBound(appParams)) {
+		if (leftSub.currentTotalWeight <= appParams->maxCapacity && leftSub.upperBound > realGLB) {
 			if (leftSub.currentItem == appParams->maxItems && leftSub.currentTotalWeight > lowerBounds[tid]) {
 				lowerBounds[tid] = leftSub.currentTotalWeight;
 			} else if (leftSub.currentItem != appParams->maxItems) {
@@ -93,7 +99,7 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		}
 
 		rightSub.upperBound = calculateUpperBound(&rightSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
-		if (rightSub.upperBound > findRealGlobalLowerBound(appParams)) {
+		if (rightSub.upperBound > realGLB) {
 			if (rightSub.currentItem == appParams->maxItems && rightSub.currentTotalWeight > lowerBounds[tid]) {
 				lowerBounds[tid] = rightSub.currentTotalWeight;
 			} else if (rightSub.currentItem != appParams->maxItems) {
@@ -105,7 +111,6 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	__syncthreads();
 	
 	if (tid == 0) {
-		// double maximum = getState()->nodeLowerBound;
 		double maximum = appParams->blockLowerBounds[blockIdx.x];
 		for (int i = 0; i != nInputs; i++) {
 			if (lowerBounds[i] > maximum) {
@@ -119,6 +124,20 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	push(leftSub, pushLeft);
 	push(rightSub, pushRight);
 }
+
+/*
+__MDECL__
+void BranchAndBoundKnapsack_dev::
+A<InputView>::init()
+{
+        if (threadIdx.x == 0) {
+                // getState()->nodeLowerBound = getAppParams()->globalLowerBound;
+                // printf("blockLowerBound: %f\n", getAppParams()->blockLowerBounds[0]);
+                // printf("blockid:%d\n", blockIdx.x);
+        }
+}
+*/
+
 /*
 __MDECL__
 void BranchAndBoundKnapsack_dev::
