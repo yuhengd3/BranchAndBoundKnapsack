@@ -21,7 +21,9 @@ double cpuGlobalLowerBound = 0;
 
 unsigned int srand_seed = 0;
 unsigned int MAX_ITEMS = 100000;
-unsigned int MAX_CAPACITY = 10000;
+double MAX_CAPACITY = 10000;
+
+unsigned counter = 0;
 
 double calculateUpperBound(unsigned int currentItem, double currentWeight, double currentProfit, unsigned int* weights, unsigned int* profits);
 
@@ -31,6 +33,8 @@ void branchCPU(SubProblem s, unsigned int* weights, unsigned int* profits) {
 		//cout << "Over Capacity  . . ." << endl;
 		return;
 	}
+
+	counter ++;
 
 	//Sub-problem does not do better than current globalUpperBound
 	if(s.upperBound < cpuGlobalLowerBound) {
@@ -114,9 +118,9 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 	double profitPerWeight[MAX_ITEMS];
 
 	unsigned int minWeight = 1;
-	unsigned int maxWeight = 100;
-	unsigned int minProfit = 1;
-	unsigned int maxProfit = 100;
+	unsigned int maxWeight = 1000;
+	// unsigned int minProfit = 1;
+	// unsigned int maxProfit = 100;
 
 	srand(srand_seed);
 
@@ -126,7 +130,8 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 
 	for (unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
-		baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		// baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		baseProfits[i] = baseWeights[i] + 50;
 
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
@@ -143,11 +148,16 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 			}
 		}
 
+
 		weights[j] = baseWeights[index];
 		profits[j] = baseProfits[index];
+		//
+		// baseWeights[index] = baseWeights[j];
+		// baseProfits[index] = baseProfits[j];
 
-		profitPerWeight[index] = 0.0;
-
+		// profitPerWeight[index] = baseProfits[index] / baseWeights[index];
+		profitPerWeight[index] = 0;
+		//
 		++j;
 
 		if (j == MAX_ITEMS) {
@@ -225,19 +235,27 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 
 
 int main(int argc, char * argv[]) {
-	if (argc != 4) {
-		printf("usage: ./Knapsack srand_seed max_items max_capacity\n");
+	if (argc != 3) {
+		printf("usage: ./Knapsack srand_seed max_items\n");
 		return -1;
 	}
 
 	srand_seed = atoi(argv[1]);
 	MAX_ITEMS = atoi(argv[2]);
-	MAX_CAPACITY = atoi(argv[3]);
+	// MAX_CAPACITY = atoi(argv[3]);
 
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
 
 	randomItems(weights, profits);
+	MAX_CAPACITY = 0;
+	for (unsigned i = 1; i != MAX_ITEMS; i++) {
+		MAX_CAPACITY += weights[i];
+		// std::cout << (double) profits[i] / weights[i] << std::endl;
+	}
+	MAX_CAPACITY /= 2;
+
+	std::cout << "finished randomItems" << std::endl;
 
 	// CPU version
 	SubProblem s;
@@ -249,12 +267,12 @@ int main(int argc, char * argv[]) {
 
 	branchCPU(s, weights, profits);
 
-
-
-	//
+	std::cout << "finished cpu version: " << cpuGlobalLowerBound << std::endl;	
+	std::cout << "counter: " << counter << std::endl;
 
 	globalLowerBound = calculateInitialLowerBound(weights, profits);
-	//std::cout << "initial global lower bound: " << globalLowerBound << std::endl;
+	std::cout << "initial global lower bound: " << globalLowerBound << std::endl;
+
 
 	std::vector<SubProblem> repo[MAX_ITEMS / 8] = {std::vector<SubProblem>()};	
 	SubProblem input;
@@ -372,19 +390,21 @@ int main(int argc, char * argv[]) {
 			if ((unsigned) index == MAX_ITEMS / 8 - 1) {
 				// leaf
 				// update global lower boud;
-				/*
 				for (size_t a = 0; a != outsize; a++) {
 					if (output_ptr[a].upperBound > globalLowerBound) {
 						globalLowerBound = output_ptr[a].upperBound;
 					}
 				}
-				*/
+
+				/*
 				cudaMemcpy(block_bounds, d_blockLowerBounds, num_blocks * sizeof(double), cudaMemcpyDeviceToHost);
 				for (size_t a = 0; a != num_blocks; a++) {
 					if (block_bounds[a] > globalLowerBound) {
 						globalLowerBound = block_bounds[a];
 					}
 				}
+				*/
+				std::cout << "current GPU max: " << globalLowerBound << std::endl;
 
 			} else {
 				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(repo[index + 1]));
