@@ -74,12 +74,20 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 	baseProfits[0] = 0;
 	profitPerWeight[0] = 0.0;
 
+	double total_weights = 0;
+
 	for(unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
 		baseProfits[i] = baseWeights[i] + 50;
 
+		total_weights += baseWeights[i];
+
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
+
+	MAX_CAPACITY = total_weights / 2;
+
+	cout << "MAX_CAPACITY " << MAX_CAPACITY << endl;
 
 	//Sort random items by highest profit per weight to lowest
 	unsigned int j = 1;
@@ -126,8 +134,8 @@ void printItemProfitPerWeight(unsigned int* weights, unsigned int* profits) {
 }
 
 void printSubProblem(subProblem s, unsigned int* weights, unsigned int* profits) {
-	cout << "currentItem = " << s.currentItem << endl;
-	cout << "upperBound = " << s.upperBound << endl;
+	// cout << "currentItem = " << s.currentItem << endl;
+	// cout << "upperBound = " << s.upperBound << endl;
 	
 
 	cout << "Final Profit = " << s.currentTotalProfit << endl;
