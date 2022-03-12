@@ -1,0 +1,8 @@
+/Knapsack
+/ntrack
+/libBranchAndBoundKnapsack.a
+/BranchAndBoundKnapsack.cuh
+/BranchAndBoundKnapsack_dev.cuh
+/BranchAndBoundKnapsack_dev_combined.cu
+/BranchAndBoundKnapsack_init.cu
+
