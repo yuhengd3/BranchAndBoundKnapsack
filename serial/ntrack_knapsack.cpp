@@ -1,17 +1,23 @@
-#include<iostream>
-#include<cstdlib>
+#include <iostream>
+#include <cstdlib>
 
-#define WINDOWS
+// #define WINDOWS
 
 #ifdef WINDOWS
-#include<conio.h>
+#include <conio.h>
 #endif
+
+#include <sys/resource.h>
 
 using namespace std;
 
-//To test these values, need to increase stack size to ~100MB.
-#define MAX_ITEMS 100000
-#define MAX_CAPACITY 10000
+// To test these values, need to increase stack size to ~100MB.
+// #define MAX_ITEMS 100000
+// #define MAX_CAPACITY 10000
+
+unsigned int srand_seed = 0;
+int MAX_ITEMS = 100;
+int MAX_CAPACITY = 100;
 
 
 
@@ -57,11 +63,11 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 	double profitPerWeight[MAX_ITEMS];
 
 	unsigned int minWeight = 1;
-	unsigned int maxWeight = 100;
-	unsigned int minProfit = 1;
-	unsigned int maxProfit = 100;
+	unsigned int maxWeight = 1000;
+	// unsigned int minProfit = 1;
+	// unsigned int maxProfit = 100;
 
-	srand(0);
+	srand(srand_seed);
 
 	//Set first dummy item
 	baseWeights[0] = 0;
@@ -70,7 +76,7 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 
 	for(unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
-		baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		baseProfits[i] = baseWeights[i] + 50;
 
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
@@ -183,7 +189,23 @@ void branch(subProblem s, unsigned int* weights, unsigned int* profits) {
 	}
 }
 
-int main() {
+int main(int argc, char * argv[]) {
+	/*
+	const rlim_t kStackSize = 64L * 1024L * 1024L;
+	struct rlimit rl;
+	if (setrlimit(kStackSize, NULL)) {
+		printf("can't set stack size\n");
+		return -1;
+	}
+	*/
+
+	if (argc != 3) {
+		cout << "correct usage: ./ntrack <srand_seed> <max_items>" << endl;
+		return -1;
+	}
+
+	srand_seed = atoi(argv[1]);
+	MAX_ITEMS = atoi(argv[2]);
 
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
@@ -200,6 +222,8 @@ int main() {
 	s.currentTotalWeight = 0;
 
 	s.upperBound = calcuateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
+
+	cout << "Initial upper bound: " << s.upperBound << endl;
 
 	
 	branch(s, weights, profits);
