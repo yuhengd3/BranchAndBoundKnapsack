@@ -9,11 +9,19 @@
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 100000
-#define MAX_CAPACITY 10000
+using namespace std;
+
+// #define MAX_ITEMS 100000
+// #define MAX_CAPACITY 10000
 #define HOST_MAX_ITEM 16
+
+unsigned int srand_seed = 0;
+unsigned MAX_ITEMS = 100;
+unsigned MAX_CAPACITY = 100;
+
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
-unsigned int MAX_INPUT_ = 200000;
+// unsigned int MAX_INPUT_ = 200000;
+unsigned int MAX_INPUT_ = 500;
 unsigned int HOST_MAX_LEVEL = 16;
 double globalLowerBound = 0;
 
@@ -57,22 +65,31 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 	double profitPerWeight[MAX_ITEMS];
 
 	unsigned int minWeight = 1;
-	unsigned int maxWeight = 100;
-	unsigned int minProfit = 1;
-	unsigned int maxProfit = 100;
+	unsigned int maxWeight = 1000;
+	// unsigned int minProfit = 1;
+	// unsigned int maxProfit = 100;
 
-	srand(2);
+	srand(srand_seed);
 
 	baseWeights[0] = 0;
 	baseProfits[0] = 0;
 	profitPerWeight[0] = 0.0;
 
+	double total_weights = 0;
+
 	for (unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
-		baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		// baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		baseProfits[i] = baseWeights[i] + 50;
+
+		total_weights += baseWeights[i];
 
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
+
+	MAX_CAPACITY = total_weights / 2;
+
+	printf("MAX_CAPACITY: %d\n", MAX_CAPACITY);
 
 	// sort
 	unsigned int j = 1;
@@ -167,7 +184,15 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 }
 
 
-int main() {
+int main(int argc, char * argv[]) {
+	if (argc != 3) {
+		cout << "correct usage: ./Knapsack <srand_seed> <max_items>" << endl;
+		return -1;
+	}
+
+	srand_seed = atoi(argv[1]);
+	MAX_ITEMS = atoi(argv[2]);
+
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
 
@@ -184,6 +209,8 @@ int main() {
 	input.upperBound = calculateUpperBound(0, 0, 0, weights, profits);
 
 	branch(input, weights, profits, repo);
+
+	// repo[0].push_back(input);
        
 	unsigned int input_size;
 	unsigned int output_size;
@@ -240,7 +267,7 @@ int main() {
 	
 		inBuffer.set(input_ptr, input_size);
 
-		// app.getParams()->globalLowerBound = globalLowerBound;
+		app.getParams()->globalLowerBound = globalLowerBound;
 		// app.getParams()->weights = d_weights;
 		// app.getParams()->profits = d_profits;
 		app.getParams()->maxCapacity = MAX_CAPACITY;
@@ -289,22 +316,23 @@ int main() {
 		std::cout << "got " << outsize << " outputs " << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
-			if (index == MAX_ITEMS / 8 - 1) {
+			if (index == (int) MAX_ITEMS / 8 - 1) {
 				// leaf
 				// update global lower boud;
-				/*
 				for (size_t a = 0; a != outsize; a++) {
 					if (output_ptr[a].upperBound > globalLowerBound) {
 						globalLowerBound = output_ptr[a].upperBound;
+						cout << "updating lowerbound: " << globalLowerBound << endl;
+						// globalLowerBound = output_ptr[a].currentTotalProfit;
 					}
 				}
-				*/
+				/*
 				cudaMemcpy(block_bounds, d_blockLowerBounds, num_blocks * sizeof(double), cudaMemcpyDeviceToHost);
 				for (size_t a = 0; a != num_blocks; a++) {
 					if (block_bounds[a] > globalLowerBound) {
 						globalLowerBound = block_bounds[a];
 					}
-				}
+				}*/
 
 			} else {
 				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(repo[index + 1]));

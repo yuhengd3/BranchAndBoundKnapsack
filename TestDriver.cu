@@ -9,13 +9,74 @@
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 100000
-#define MAX_CAPACITY 10000
+//#define MAX_ITEMS 100000
+//#define MAX_CAPACITY 10000
 #define HOST_MAX_ITEM 16
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
 unsigned int MAX_INPUT_ = 200000;
 unsigned int HOST_MAX_LEVEL = 16;
 double globalLowerBound = 0;
+
+double cpuGlobalLowerBound = 0;
+
+unsigned int srand_seed = 0;
+unsigned int MAX_ITEMS = 100000;
+double MAX_CAPACITY = 10000;
+
+unsigned counter = 0;
+
+double calculateUpperBound(unsigned int currentItem, double currentWeight, double currentProfit, unsigned int* weights, unsigned int* profits);
+
+void branchCPU(SubProblem s, unsigned int* weights, unsigned int* profits) {
+	//Sub-problem is overweight, terminate
+	if(s.currentTotalWeight > MAX_CAPACITY) {
+		//cout << "Over Capacity  . . ." << endl;
+		return;
+	}
+
+	counter ++;
+
+	//Sub-problem does not do better than current globalUpperBound
+	if(s.upperBound < cpuGlobalLowerBound) {
+		//cout << "Upper bound lower than current best . . ." << endl;
+		return;
+	}
+
+	//If we've reached a leaf node . . .
+	if(s.currentItem == MAX_ITEMS) {
+		double finalBranchCost = s.currentTotalProfit;
+		if(finalBranchCost > cpuGlobalLowerBound) {
+			cpuGlobalLowerBound = finalBranchCost;
+			// globalBestSubProblem = s;
+
+			//cout << "New Best Branch Profit: " << finalBranchCost << endl;
+		}
+		return;
+	}
+
+	//NOTE: WE DON'T STORE WHICH BRANCH THIS IS, SO WE JUST GO AHEAD AND RECALCULATE
+	//THE UPPER BOUND EVERY TIME.  IF WE TRACKED IT, THEN WE COULD RECALCUATE FOR EVERY
+	//RIGHT BRANCH ONLY INSTEAD. . .
+	//if(s.storedItems[s.currentItem] == false) {
+		s.upperBound = calculateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
+	//}
+
+	if(s.upperBound > cpuGlobalLowerBound) {
+		SubProblem nextLeft = s;	//Include next item
+		SubProblem nextRight = s;	//Exclude next item
+
+		nextLeft.currentItem += 1;
+		nextRight.currentItem += 1;
+
+		nextLeft.currentTotalProfit += profits[nextLeft.currentItem];
+		nextLeft.currentTotalWeight += weights[nextLeft.currentItem];
+
+		//cout << endl << "Left Branch. . . " << endl;
+		branchCPU(nextLeft, weights, profits);
+		//cout << endl << "Right Branch. . . " << endl;
+		branchCPU(nextRight, weights, profits);
+	}
+}
 
 double calculateInitialLowerBound(unsigned int * weights, unsigned int * profits) {
 	double currProfit = 0;
@@ -57,11 +118,11 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 	double profitPerWeight[MAX_ITEMS];
 
 	unsigned int minWeight = 1;
-	unsigned int maxWeight = 100;
-	unsigned int minProfit = 1;
-	unsigned int maxProfit = 100;
+	unsigned int maxWeight = 1000;
+	// unsigned int minProfit = 1;
+	// unsigned int maxProfit = 100;
 
-	srand(2);
+	srand(srand_seed);
 
 	baseWeights[0] = 0;
 	baseProfits[0] = 0;
@@ -69,7 +130,8 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 
 	for (unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
-		baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		// baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		baseProfits[i] = baseWeights[i] + 50;
 
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
@@ -86,11 +148,16 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 			}
 		}
 
+
 		weights[j] = baseWeights[index];
 		profits[j] = baseProfits[index];
+		//
+		// baseWeights[index] = baseWeights[j];
+		// baseProfits[index] = baseProfits[j];
 
-		profitPerWeight[index] = 0.0;
-
+		// profitPerWeight[index] = baseProfits[index] / baseWeights[index];
+		profitPerWeight[index] = 0;
+		//
 		++j;
 
 		if (j == MAX_ITEMS) {
@@ -167,14 +234,45 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 }
 
 
-int main() {
+int main(int argc, char * argv[]) {
+	if (argc != 3) {
+		printf("usage: ./Knapsack srand_seed max_items\n");
+		return -1;
+	}
+
+	srand_seed = atoi(argv[1]);
+	MAX_ITEMS = atoi(argv[2]);
+	// MAX_CAPACITY = atoi(argv[3]);
+
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
 
 	randomItems(weights, profits);
+	MAX_CAPACITY = 0;
+	for (unsigned i = 1; i != MAX_ITEMS; i++) {
+		MAX_CAPACITY += weights[i];
+		// std::cout << (double) profits[i] / weights[i] << std::endl;
+	}
+	MAX_CAPACITY /= 2;
+
+	std::cout << "finished randomItems" << std::endl;
+
+	// CPU version
+	SubProblem s;
+	s.currentItem = 0;
+	s.currentTotalProfit = 0;
+	s.currentTotalWeight = 0;
+
+	s.upperBound = calculateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
+
+	branchCPU(s, weights, profits);
+
+	std::cout << "finished cpu version: " << cpuGlobalLowerBound << std::endl;	
+	std::cout << "counter: " << counter << std::endl;
 
 	globalLowerBound = calculateInitialLowerBound(weights, profits);
 	std::cout << "initial global lower bound: " << globalLowerBound << std::endl;
+
 
 	std::vector<SubProblem> repo[MAX_ITEMS / 8] = {std::vector<SubProblem>()};	
 	SubProblem input;
@@ -289,22 +387,24 @@ int main() {
 		std::cout << "got " << outsize << " outputs " << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
-			if (index == MAX_ITEMS / 8 - 1) {
+			if ((unsigned) index == MAX_ITEMS / 8 - 1) {
 				// leaf
 				// update global lower boud;
-				/*
 				for (size_t a = 0; a != outsize; a++) {
 					if (output_ptr[a].upperBound > globalLowerBound) {
 						globalLowerBound = output_ptr[a].upperBound;
 					}
 				}
-				*/
+
+				/*
 				cudaMemcpy(block_bounds, d_blockLowerBounds, num_blocks * sizeof(double), cudaMemcpyDeviceToHost);
 				for (size_t a = 0; a != num_blocks; a++) {
 					if (block_bounds[a] > globalLowerBound) {
 						globalLowerBound = block_bounds[a];
 					}
 				}
+				*/
+				std::cout << "current GPU max: " << globalLowerBound << std::endl;
 
 			} else {
 				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(repo[index + 1]));
@@ -322,7 +422,13 @@ int main() {
 	}
 	
 
-	std::cout << "max profit: " << globalLowerBound << std::endl;
+	std::cout << "max profit from gpu: " << globalLowerBound << std::endl;
+
+	if (fabs(globalLowerBound - cpuGlobalLowerBound) < 0.0001) {
+		std::cout << "both versions got the same result" << std::endl;
+	} else {
+		std::cout << "cpu got " << cpuGlobalLowerBound << " gpu got " << globalLowerBound << std::endl;
+	}
 
 	free(block_bounds);
 

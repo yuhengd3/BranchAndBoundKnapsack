@@ -1,0 +1,48 @@
+// A linear pipeline of eight node, each computing sub-problems at a certain depth
+
+reference "SubProblem.cuh";
+
+Application BranchAndBoundKnapsack;
+
+Module A : SubProblem -> SubProblem : 3;
+AllThreads A;
+
+Node A0node: A;
+// Cycle A0node 8;
+Node A1node: A;
+Node A2node: A;
+Node A3node: A;
+Node A4node: A;
+Node A5node: A;
+Node A6node: A;
+Node A7node: A;
+Node SinkNode: Sink<SubProblem>;
+
+Source A0node buffer;
+
+Edge A0node -> A1node;
+Edge A1node -> A2node;
+Edge A2node -> A3node;
+Edge A3node -> A4node;
+Edge A4node -> A5node;
+Edge A5node -> A6node;
+Edge A6node -> A7node;
+Edge A7node -> SinkNode;
+
+// A0node -> SinkNode;
+
+// NodeParam A::weights : unsigned *;
+// NodeParam A::profits : unsigned *;
+// NodeParam A::globalUpperBound : double;
+// NodeParam A::globalBestSubProblem : SubProblem *;
+
+Param weights : unsigned *;
+Param profits : unsigned *;
+Param globalLowerBound : double;
+Param maxCapacity : int;
+Param maxItems : int;
+Param numBlocks: int;
+Param blockLowerBounds: double *;
+
+
+// NodeState A::nodeLowerBound : double;
