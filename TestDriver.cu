@@ -338,7 +338,7 @@ int main(int argc, char * argv[]) {
 	
 		inBuffer.set(input_ptr, input_size);
 
-		// app.getParams()->globalLowerBound = globalLowerBound;
+		app.getParams()->globalLowerBound = globalLowerBound;
 		// app.getParams()->weights = d_weights;
 		// app.getParams()->profits = d_profits;
 		app.getParams()->maxCapacity = MAX_CAPACITY;
@@ -387,11 +387,14 @@ int main(int argc, char * argv[]) {
 		std::cout << "got " << outsize << " outputs " << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
-			if ((unsigned) index == MAX_ITEMS / 8 - 1) {
+			// std::cout << "index: " << index << std::endl;
+			// std::cout << "max_items / 8 - 1" << MAX_ITEMS / 8 - 1 << std::endl;
+			if (index == (int) MAX_ITEMS / 8 - 1) {
 				// leaf
 				// update global lower boud;
 				for (size_t a = 0; a != outsize; a++) {
 					if (output_ptr[a].upperBound > globalLowerBound) {
+						std::cout << "result at node: " << output_ptr[a].upperBound << std::endl;
 						globalLowerBound = output_ptr[a].upperBound;
 					}
 				}

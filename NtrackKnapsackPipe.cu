@@ -1,10 +1,7 @@
 #include "BranchAndBoundKnapsack_dev.cuh"
 
-// #include <math.h>
-
 __device__
 void findRealGlobalLowerBound(double * arr, size_t sz) {
-	// size_t iter = log2(sz - 1) + 1;
 	size_t half_sz;
 
 	while (true) {
@@ -52,15 +49,17 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	unsigned int tid = threadIdx.x;
 	auto appParams = getAppParams();
 
-	__shared__ double lowerBounds[THREADS_PER_BLOCK];
+	// __shared__ double lowerBounds[THREADS_PER_BLOCK];
 
 	__syncthreads();
+	/*
 	if (tid == 0) {
 		for (int i = 0; i != nInputs; i++) {
 			lowerBounds[i] = appParams->blockLowerBounds[blockIdx.x];
 		}
 	}
 	__syncthreads();
+	*/
 
 	int toPush = 1;
 	if (toPush && tid >= nInputs) {
@@ -69,17 +68,17 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 	SubProblem leftSub, rightSub;
 	int pushLeft = 0, pushRight = 0;
-	// __shared__ double block_bounds[appParams->numBlocks];
-	__shared__ double block_bounds[400];
-	memcpy(block_bounds, appParams->blockLowerBounds, sizeof(double) * appParams->numBlocks);
+	// __shared__ double block_bounds[400];
+	// memcpy(block_bounds, appParams->blockLowerBounds, sizeof(double) * appParams->numBlocks);
 
-	findRealGlobalLowerBound(block_bounds, appParams->numBlocks);
+//	findRealGlobalLowerBound(block_bounds, appParams->numBlocks);
 	__syncthreads();
 
 
-	double realGLB = block_bounds[0];
+//	double realGLB = block_bounds[0];
+	double realGLB = appParams->globalLowerBound;
 
-	if (toPush && inputItem.upperBound > realGLB) {
+	if (toPush && inputItem.currentItem < appParams->maxItems && inputItem.upperBound > realGLB) {
 		leftSub = inputItem;
 		rightSub = inputItem;
 		
@@ -90,25 +89,36 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		leftSub.currentTotalWeight += appParams->weights[leftSub.currentItem];
 
 		leftSub.upperBound = calculateUpperBound(&leftSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
+		// printf("leftSub.upperBound: %f\n", leftSub.upperBound);
 		if (leftSub.currentTotalWeight <= appParams->maxCapacity && leftSub.upperBound > realGLB) {
-			if (leftSub.currentItem == appParams->maxItems && leftSub.currentTotalWeight > lowerBounds[tid]) {
+			pushLeft = 1;
+			/*
+			if (leftSub.currentItem == appParams->maxItems && leftSub.currentTotalWeight > appParams->globalLowerBound) {
 				lowerBounds[tid] = leftSub.currentTotalWeight;
+				pushLeft = 1;
 			} else if (leftSub.currentItem != appParams->maxItems) {
 				pushLeft = 1;
 			}
+			*/
 		}
 
 		rightSub.upperBound = calculateUpperBound(&rightSub, appParams->weights, appParams->profits, appParams->maxCapacity, appParams->maxItems);
 		if (rightSub.upperBound > realGLB) {
-			if (rightSub.currentItem == appParams->maxItems && rightSub.currentTotalWeight > lowerBounds[tid]) {
+			pushRight = 1;
+			/*
+			if (rightSub.currentItem == appParams->maxItems && rightSub.currentTotalWeight > appParams->globalLowerBound) {
 				lowerBounds[tid] = rightSub.currentTotalWeight;
+				pushRight = 1;
 			} else if (rightSub.currentItem != appParams->maxItems) {
 				pushRight = 1;
 			}
+			*/
 		}
 	}
 
 	__syncthreads();
+
+	/*
 	
 	if (tid == 0) {
 		double maximum = appParams->blockLowerBounds[blockIdx.x];
@@ -120,6 +130,7 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 		appParams->blockLowerBounds[blockIdx.x] = maximum;
 	}
 	__syncthreads();
+	*/
 
 	push(leftSub, pushLeft);
 	push(rightSub, pushRight);

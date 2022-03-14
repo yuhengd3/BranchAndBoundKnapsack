@@ -9,10 +9,18 @@
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
 
-#define MAX_ITEMS 100000
-#define MAX_CAPACITY 10000
+using namespace std;
+
+// #define MAX_ITEMS 100000
+// #define MAX_CAPACITY 10000
 #define HOST_MAX_ITEM 16
+
+unsigned int srand_seed = 0;
+unsigned MAX_ITEMS = 100;
+unsigned MAX_CAPACITY = 100;
+
 unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
+// unsigned int MAX_INPUT_ = 200000;
 unsigned int MAX_INPUT_ = 200000;
 unsigned int HOST_MAX_LEVEL = 16;
 double globalLowerBound = 0;
@@ -57,22 +65,31 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 	double profitPerWeight[MAX_ITEMS];
 
 	unsigned int minWeight = 1;
-	unsigned int maxWeight = 100;
-	unsigned int minProfit = 1;
-	unsigned int maxProfit = 100;
+	unsigned int maxWeight = 1000;
+	// unsigned int minProfit = 1;
+	// unsigned int maxProfit = 100;
 
-	srand(2);
+	srand(srand_seed);
 
 	baseWeights[0] = 0;
 	baseProfits[0] = 0;
 	profitPerWeight[0] = 0.0;
 
+	double total_weights = 0;
+
 	for (unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
-		baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		// baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
+		baseProfits[i] = baseWeights[i] + 50;
+
+		total_weights += baseWeights[i];
 
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
+
+	MAX_CAPACITY = total_weights / 2;
+
+	printf("MAX_CAPACITY: %d\n", MAX_CAPACITY);
 
 	// sort
 	unsigned int j = 1;
@@ -115,26 +132,17 @@ int findFirstRemaining(std::vector<SubProblem> repo[]) {
 }
 
 void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vector<SubProblem> repo[]) {
-	//printSubProblem(s, weights, profits);
-
 	//Sub-problem is overweight, terminate
 	if(s.currentTotalWeight > MAX_CAPACITY) {
-		//cout << "Over Capacity  . . ." << endl;
 		return;
 	}
 
 	//Sub-problem does not do better than current globalLowerBound
 	if(s.upperBound < globalLowerBound) {
-		//cout << "Upper bound lower than current best . . ." << endl;
 		return;
 	}
 
-	//NOTE: WE DON'T STORE WHICH BRANCH THIS IS, SO WE JUST GO AHEAD AND RECALCULATE
-	//THE UPPER BOUND EVERY TIME.  IF WE TRACKED IT, THEN WE COULD RECALCUATE FOR EVERY
-	//RIGHT BRANCH ONLY INSTEAD. . .
-	//if(s.storedItems[s.currentItem] == false) {
-		s.upperBound = calculateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
-	//}
+	s.upperBound = calculateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
 
 	if(s.upperBound > globalLowerBound) {
 		SubProblem nextLeft = s;	//Include next item
@@ -167,7 +175,15 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 }
 
 
-int main() {
+int main(int argc, char * argv[]) {
+	if (argc != 3) {
+		cout << "correct usage: ./Knapsack <srand_seed> <max_items>" << endl;
+		return -1;
+	}
+
+	srand_seed = atoi(argv[1]);
+	MAX_ITEMS = atoi(argv[2]);
+
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
 
@@ -184,13 +200,15 @@ int main() {
 	input.upperBound = calculateUpperBound(0, 0, 0, weights, profits);
 
 	branch(input, weights, profits, repo);
+
+	// repo[0].push_back(input);
        
 	unsigned int input_size;
 	unsigned int output_size;
 	SubProblem * input_ptr = NULL;
 	SubProblem * output_ptr = NULL;
 	std::vector<SubProblem> leafSubProblems;
-	unsigned int num_blocks = 0;
+	// unsigned int num_blocks = 0;
 	double * block_bounds = NULL;
 
 	// copy weights and profits to gpu memory
@@ -200,7 +218,7 @@ int main() {
 	cudaStatus = cudaMalloc((void**) &d_weights, MAX_ITEMS * sizeof(unsigned));
        	if (cudaStatus != cudaSuccess) {
 		std::cout << "cudaMalloc error" << std::endl;
-		cudaFree(d_weights);
+		cudaFree((void*)d_weights);
 		return -1;
 	}
 
@@ -211,6 +229,7 @@ int main() {
 		return -1;
 	}
 	*/
+
 	int index = -1;
 
 	while ((index = findFirstRemaining(repo)) > -1) {
@@ -225,7 +244,6 @@ int main() {
 			input_size = MAX_INPUT_;
 			input_ptr = new SubProblem[input_size];
 			std::copy(nextVec.begin(), nextVec.begin()+MAX_INPUT_, input_ptr);
-			// delete from the start of the vector
 			nextVec.erase(nextVec.begin(), nextVec.begin()+MAX_INPUT_);
 		}
 
@@ -240,12 +258,13 @@ int main() {
 	
 		inBuffer.set(input_ptr, input_size);
 
-		// app.getParams()->globalLowerBound = globalLowerBound;
+		app.getParams()->globalLowerBound = globalLowerBound;
 		// app.getParams()->weights = d_weights;
 		// app.getParams()->profits = d_profits;
 		app.getParams()->maxCapacity = MAX_CAPACITY;
 		app.getParams()->maxItems = MAX_ITEMS;
-		
+	
+		/*	
 		if (num_blocks == 0) {
 			num_blocks = app.getNBlocks(); // 184
 			block_bounds = (double*) calloc(num_blocks, sizeof(double));
@@ -258,7 +277,8 @@ int main() {
 		cudaMalloc((void**) &d_blockLowerBounds, num_blocks * sizeof(double));
 		cudaMemcpy(d_blockLowerBounds, block_bounds, num_blocks * sizeof(double), cudaMemcpyHostToDevice); 
 		app.getParams()->blockLowerBounds = d_blockLowerBounds;
-
+		*/
+		
 		unsigned * d_weights, * d_profits;
 		cudaError_t cudaStatus;
 		cudaStatus = cudaMalloc((void**) &d_weights, MAX_ITEMS * sizeof(unsigned));
@@ -289,22 +309,23 @@ int main() {
 		std::cout << "got " << outsize << " outputs " << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
-			if (index == MAX_ITEMS / 8 - 1) {
+			if (index == (int) MAX_ITEMS / 8 - 1) {
 				// leaf
 				// update global lower boud;
-				/*
 				for (size_t a = 0; a != outsize; a++) {
-					if (output_ptr[a].upperBound > globalLowerBound) {
-						globalLowerBound = output_ptr[a].upperBound;
+					if (output_ptr[a].currentTotalProfit > globalLowerBound) {
+						globalLowerBound = output_ptr[a].currentTotalProfit;
+						cout << "updating lowerbound: " << globalLowerBound << endl;
+						// globalLowerBound = output_ptr[a].currentTotalProfit;
 					}
 				}
-				*/
+				/*
 				cudaMemcpy(block_bounds, d_blockLowerBounds, num_blocks * sizeof(double), cudaMemcpyDeviceToHost);
 				for (size_t a = 0; a != num_blocks; a++) {
 					if (block_bounds[a] > globalLowerBound) {
 						globalLowerBound = block_bounds[a];
 					}
-				}
+				}*/
 
 			} else {
 				std::copy(output_ptr, output_ptr + outsize, std::back_inserter(repo[index + 1]));
@@ -317,7 +338,7 @@ int main() {
 			
 		cudaFree((void*)d_weights);
 		cudaFree((void*)d_profits);
-		cudaFree((void*)d_blockLowerBounds);
+		// cudaFree((void*)d_blockLowerBounds);
 
 	}
 	
