@@ -19,7 +19,9 @@ unsigned int srand_seed = 0;
 unsigned MAX_ITEMS = 100;
 unsigned MAX_CAPACITY = 100;
 
-unsigned int OUTPUTS_MULTIPLIER = 256; // (1 << 9);
+unsigned int PIPELINE_NODES = 4;
+
+unsigned int OUTPUTS_MULTIPLIER = (1 << PIPELINE_NODES + 1);
 // unsigned int MAX_INPUT_ = 200000;
 unsigned int MAX_INPUT_ = 200000;
 unsigned int HOST_MAX_LEVEL = 16;
@@ -120,7 +122,7 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 }
 
 int findFirstRemaining(std::vector<SubProblem> repo[]) {
-	int index = MAX_ITEMS / 8;
+	int index = MAX_ITEMS / PIPELINE_NODES;
 	index -= 1;
 	while (index >= 0) {
 		if (!repo[index].empty()) {
@@ -161,14 +163,14 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 			if (nextLeft.currentItem < HOST_MAX_LEVEL) {
 				branch(nextLeft, weights, profits, repo);
 			} else {
-				repo[HOST_MAX_LEVEL / 8].push_back(nextLeft);
+				repo[HOST_MAX_LEVEL / PIPELINE_NODES].push_back(nextLeft);
 			}
 		}	
 		if (nextRight.upperBound > globalLowerBound) {
 		       	if (nextRight.currentItem < HOST_MAX_LEVEL) {
 		       		branch(nextRight, weights, profits, repo);
 		 	} else {
-				repo[HOST_MAX_LEVEL / 8].push_back(nextRight);
+				repo[HOST_MAX_LEVEL / PIPELINE_NODES].push_back(nextRight);
 			}	
 		}
 	}
@@ -192,7 +194,7 @@ int main(int argc, char * argv[]) {
 	globalLowerBound = calculateInitialLowerBound(weights, profits);
 	std::cout << "initial global lower bound: " << globalLowerBound << std::endl;
 
-	std::vector<SubProblem> repo[MAX_ITEMS / 8] = {std::vector<SubProblem>()};	
+	std::vector<SubProblem> repo[MAX_ITEMS / PIPELINE_NODES] = {std::vector<SubProblem>()};	
 	SubProblem input;
 	input.currentItem = 0;
 	input.currentTotalProfit = 0;
@@ -309,7 +311,7 @@ int main(int argc, char * argv[]) {
 		std::cout << "got " << outsize << " outputs " << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
-			if (index == (int) MAX_ITEMS / 8 - 1) {
+			if (index == (int) (MAX_ITEMS / PIPELINE_NODES) - 1) {
 				// leaf
 				// update global lower boud;
 				for (size_t a = 0; a != outsize; a++) {
