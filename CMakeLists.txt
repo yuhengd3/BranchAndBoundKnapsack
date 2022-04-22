@@ -7,6 +7,8 @@
 project(Knapsack
 	LANGUAGES CUDA CXX)
 
+set(MERCATOR_FLAGS -q 2)
+
 add_mercator_app(TARGET BranchAndBoundKnapsack
 		 SPECFILE NtrackKnapsackPipe.mtr
 		 SOURCES NtrackKnapsackPipe.cu)

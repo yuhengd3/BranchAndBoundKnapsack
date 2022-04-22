@@ -18,6 +18,7 @@ using namespace std;
 unsigned int srand_seed = 0;
 int MAX_ITEMS = 100;
 int MAX_CAPACITY = 100;
+int SPREAD = 0;
 
 struct subProblem {
 	unsigned int currentItem;
@@ -36,13 +37,14 @@ double globalUpperBound = 0.0;
 subProblem globalBestSubProblem;
 
 int main(int argc, char * argv[]) {
-	if (argc != 3) {
-		cout << "correct usage: ./ntrack <srand_seed> <max_items>" << endl;
+	if (argc != 4) {
+		cout << "correct usage: ./ntrack <srand_seed> <max_items> <SPREAD>" << endl;
 		return -1;
 	}
 
 	srand_seed = atoi(argv[1]);
 	MAX_ITEMS = atoi(argv[2]);
+	SPREAD = atoi(argv[3]);
 
 	MAX_CAPACITY = MAX_ITEMS * 10;
 
@@ -173,7 +175,11 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 
 	for(unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
-		baseProfits[i] = baseWeights[i] + 50;
+		// baseProfits[i] = baseWeights[i] + 50;
+		unsigned minProfit = std::max(0, (int)baseWeights[i]-SPREAD);
+                unsigned maxProfit = std::min(1000, (int)baseWeights[i]+SPREAD);
+                // baseProfits[i] = baseWeights[i] + 50;
+                baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
 
 		total_weights += baseWeights[i];
 

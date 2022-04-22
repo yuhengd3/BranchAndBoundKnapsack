@@ -4,6 +4,7 @@ file(REMOVE_RECURSE
   "BranchAndBoundKnapsack_dev_combined.cu"
   "BranchAndBoundKnapsack_init.cu"
   "CMakeFiles/BranchAndBoundKnapsack.dir/BranchAndBoundKnapsack_dev_combined.cu.o"
+  "CMakeFiles/BranchAndBoundKnapsack.dir/BranchAndBoundKnapsack_dev_combined.cu.o.d"
   "libBranchAndBoundKnapsack.a"
   "libBranchAndBoundKnapsack.pdb"
 )
