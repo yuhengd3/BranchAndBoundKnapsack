@@ -8,6 +8,7 @@
 #endif
 
 #include <sys/resource.h>
+#include <time.h>
 
 using namespace std;
 
@@ -19,6 +20,8 @@ unsigned int srand_seed = 0;
 int MAX_ITEMS = 100;
 int MAX_CAPACITY = 100;
 int SPREAD = 0;
+
+long num_subs = 0;
 
 struct subProblem {
 	unsigned int currentItem;
@@ -46,7 +49,7 @@ int main(int argc, char * argv[]) {
 	MAX_ITEMS = atoi(argv[2]);
 	SPREAD = atoi(argv[3]);
 
-	MAX_CAPACITY = MAX_ITEMS * 10;
+	// MAX_CAPACITY = MAX_ITEMS * 10;
 
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
@@ -54,7 +57,7 @@ int main(int argc, char * argv[]) {
 	randomItems(weights, profits);
 	// randomItems_r(weights, profits);
 
-	cout << "Done generating items. . . " << endl;
+	// cout << "Done generating items. . . " << endl;
 
 	subProblem s;
 	s.currentItem = 0;
@@ -63,11 +66,22 @@ int main(int argc, char * argv[]) {
 
 	s.upperBound = calcuateUpperBound(s.currentItem, s.currentTotalWeight, s.currentTotalProfit, weights, profits);
 
-	cout << "Initial upper bound: " << s.upperBound << endl;
-	
+	//cout << "Initial upper bound: " << s.upperBound << endl;
+	struct timespec start_time, finish_time;
+	clock_gettime(CLOCK_MONOTONIC, &start_time);	
 	branch(s, weights, profits);
+	clock_gettime(CLOCK_MONOTONIC, &finish_time);
 
-	cout << "max value: " << globalUpperBound << endl;
+	cout << "CPU max value: " << globalUpperBound << endl;
+
+	struct timespec diff = {.tv_sec = finish_time.tv_sec - start_time.tv_sec, .tv_nsec = finish_time.tv_nsec - start_time.tv_nsec};
+        if (diff.tv_nsec < 0) {
+                diff.tv_nsec += 1000000000;
+                diff.tv_sec--;
+        }
+        printf("CPU executionTime: %lld.%.9ld\n", (long long) diff.tv_sec, diff.tv_nsec);
+
+	printf("#SubProblems: %ld\n", num_subs);
 
 #ifdef WINDOWS
 	_getch();
@@ -172,6 +186,7 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 	profitPerWeight[0] = 0.0;
 
 	double total_weights = 0;
+	double total_profits = 0;
 
 	for(unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
@@ -182,6 +197,7 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
                 baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
 
 		total_weights += baseWeights[i];
+		total_profits += baseProfits[i];
 
 		profitPerWeight[i] = double(baseProfits[i]) / double(baseWeights[i]);
 	}
@@ -189,6 +205,7 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 	MAX_CAPACITY = total_weights / 2;
 
 	cout << "MAX_CAPACITY " << MAX_CAPACITY << endl;
+	cout << "total_profits " << total_profits << endl;
 
 	//Sort random items by highest profit per weight to lowest
 	unsigned int j = 1;
@@ -225,6 +242,7 @@ void randomItems(unsigned int* weights, unsigned int* profits) {
 //if over capacity or profit is worse than the current global upper bound.  Finish
 //execution when a leaf node is reached, update global upper bound if neccessary.
 void branch(subProblem s, unsigned int* weights, unsigned int* profits) {
+	num_subs++;
 	//printSubProblem(s, weights, profits);
 
 	//Sub-problem is overweight, terminate

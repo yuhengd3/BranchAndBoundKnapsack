@@ -23,10 +23,10 @@ unsigned MAX_CAPACITY = 100;
 unsigned int PIPELINE_NODES = 16;
 
 unsigned int OUTPUTS_MULTIPLIER = (1 << PIPELINE_NODES + 1);
-unsigned int MAX_INPUT_ = 5000;
+unsigned int MAX_INPUT_ = 1000;
 // unsigned int MAX_INPUT_ = 400000;
 unsigned int HOST_MAX_LEVEL = 16;
-unsigned int THRESHOLD = 5000;
+unsigned int THRESHOLD = 300;
 int SPREAD = 0;
 // int first = 0;
 

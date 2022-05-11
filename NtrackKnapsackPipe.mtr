@@ -36,6 +36,7 @@ Edge A3node -> SinkNode;
 // NodeParam A::profits : unsigned *;
 // NodeParam A::globalUpperBound : double;
 // NodeParam A::globalBestSubProblem : SubProblem *;
+// NodeParam A::num_subs : unsigned *;
 
 Param weights : unsigned *;
 Param profits : unsigned *;
@@ -44,6 +45,7 @@ Param maxCapacity : int;
 Param maxItems : int;
 Param numBlocks: int;
 Param blockLowerBounds: double *;
+Param global_num_subs: int * ;
 
 
-// NodeState A::nodeLowerBound : double;
+NodeState A::num_subs : unsigned *;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <time.h>
 
 #include "SubProblem.cuh"
 #include "BranchAndBoundKnapsack.cuh"
@@ -23,9 +24,15 @@ unsigned int PIPELINE_NODES = 4;
 
 unsigned int OUTPUTS_MULTIPLIER = (1 << PIPELINE_NODES + 1);
 // unsigned int MAX_INPUT_ = 200000;
-unsigned int MAX_INPUT_ = 200000;
+unsigned int MAX_INPUT_ = 400000;
 unsigned int HOST_MAX_LEVEL = 16;
+unsigned int THRESHOLD = 5000;
+int SPREAD = 0;
+// int first = 0;
+
 double globalLowerBound = 0;
+
+int global_num_subs = 0;
 
 double calculateInitialLowerBound(unsigned int * weights, unsigned int * profits) {
 	double currProfit = 0;
@@ -82,7 +89,10 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 	for (unsigned int i = 1; i < MAX_ITEMS; ++i) {
 		baseWeights[i] = rand() % (maxWeight - minWeight) + minWeight;
 		// baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
-		baseProfits[i] = baseWeights[i] + 50;
+		unsigned minProfit = std::max(0, (int)baseWeights[i]-SPREAD);
+		unsigned maxProfit = std::min(1000, (int)baseWeights[i]+SPREAD);
+		// baseProfits[i] = baseWeights[i] + 50;
+		baseProfits[i] = rand() % (maxProfit - minProfit) + minProfit;
 
 		total_weights += baseWeights[i];
 
@@ -124,16 +134,26 @@ void randomItems(unsigned int * weights, unsigned int * profits) {
 int findFirstRemaining(std::vector<SubProblem> repo[]) {
 	int index = MAX_ITEMS / PIPELINE_NODES;
 	index -= 1;
+	int first = -1;
 	while (index >= 0) {
 		if (!repo[index].empty()) {
-			break;
+			if (repo[index].size() >= THRESHOLD) {
+				return index;
+			}
+			if (first == -1) {
+				first = index;
+			}
+
 		}
 		index -= 1;
 	}
-	return index;
+	return first;
 }
 
 void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vector<SubProblem> repo[]) {
+
+	global_num_subs ++;
+
 	//Sub-problem is overweight, terminate
 	if(s.currentTotalWeight > MAX_CAPACITY) {
 		return;
@@ -178,18 +198,37 @@ void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vec
 
 
 int main(int argc, char * argv[]) {
-	if (argc != 3) {
-		cout << "correct usage: ./Knapsack <srand_seed> <max_items>" << endl;
+
+	if (argc != 4) {
+		cout << "correct usage: ./Knapsack <srand_seed> <max_items> <spread between weight and profit" << endl;
 		return -1;
 	}
 
+	struct timespec start_time, finish_time;
+
+
 	srand_seed = atoi(argv[1]);
 	MAX_ITEMS = atoi(argv[2]);
+	SPREAD = atoi(argv[3]);
 
 	unsigned int weights[MAX_ITEMS];
 	unsigned int profits[MAX_ITEMS];
+	unsigned int accu_weights[MAX_ITEMS];
+	unsigned int accu_profits[MAX_ITEMS];
+	
 
 	randomItems(weights, profits);
+
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
+	
+	unsigned base_weight = 0;
+	unsigned base_profit = 0;
+	for (unsigned i = 0; i != MAX_ITEMS; i++) {
+		base_weight += weights[i];
+		base_profit += profits[i];
+		accu_weights[i] = base_weight;
+		accu_profits[i] = base_profit;
+	}
 
 	globalLowerBound = calculateInitialLowerBound(weights, profits);
 	std::cout << "initial global lower bound: " << globalLowerBound << std::endl;
@@ -284,7 +323,7 @@ int main(int argc, char * argv[]) {
 		unsigned * d_weights, * d_profits;
 		cudaError_t cudaStatus;
 		cudaStatus = cudaMalloc((void**) &d_weights, MAX_ITEMS * sizeof(unsigned));
-		cudaMemcpy(d_weights, weights, MAX_ITEMS * sizeof(unsigned),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_weights, accu_weights, MAX_ITEMS * sizeof(unsigned),cudaMemcpyHostToDevice);
        		if (cudaStatus != cudaSuccess) {
 			std::cout << "cudaMalloc error" << std::endl;
 			cudaFree(d_weights);
@@ -292,13 +331,17 @@ int main(int argc, char * argv[]) {
 		}
 
 		cudaStatus = cudaMalloc((void**) &d_profits, MAX_ITEMS * sizeof(unsigned));
-		cudaMemcpy(d_profits, profits, MAX_ITEMS * sizeof(unsigned),cudaMemcpyHostToDevice);
+		cudaMemcpy(d_profits, accu_profits, MAX_ITEMS * sizeof(unsigned),cudaMemcpyHostToDevice);
 		if (cudaStatus != cudaSuccess) {
 			std::cout << "cudaMalloc error" << std::endl;
 			cudaFree((void*)d_profits);
 			return -1;
 		}
-
+		
+		int * d_global_num_subs;
+		cudaMalloc((void**) & d_global_num_subs, sizeof(int));
+		cudaMemcpy(d_global_num_subs, &global_num_subs, sizeof(int), cudaMemcpyHostToDevice);
+		app.getParams()->global_num_subs = d_global_num_subs;
 		app.getParams()->weights = d_weights;
 		app.getParams()->profits = d_profits;
 
@@ -309,6 +352,9 @@ int main(int argc, char * argv[]) {
 
 		unsigned int outsize = outBuffer.size();
 		std::cout << "got " << outsize << " outputs " << std::endl;
+
+		cudaMemcpy(&global_num_subs, d_global_num_subs, sizeof(int), cudaMemcpyDeviceToHost);
+		std::cout << "subproblems: " << global_num_subs << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
 			if (index == (int) (MAX_ITEMS / PIPELINE_NODES) - 1) {
@@ -348,6 +394,14 @@ int main(int argc, char * argv[]) {
 	std::cout << "max profit: " << globalLowerBound << std::endl;
 
 	free(block_bounds);
+
+	clock_gettime(CLOCK_MONOTONIC, &finish_time);
+	struct timespec diff = {.tv_sec = finish_time.tv_sec - start_time.tv_sec, .tv_nsec = finish_time.tv_nsec - start_time.tv_nsec};
+	if (diff.tv_nsec < 0) {
+		diff.tv_nsec += 1000000000;
+		diff.tv_sec--;
+	}
+	printf("executionTime: %lld.%.9ld\n", (long long) diff.tv_sec, diff.tv_nsec);
 
 	/*
 	cudaFree((void*)d_weights);

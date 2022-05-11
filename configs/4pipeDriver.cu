@@ -32,6 +32,8 @@ int SPREAD = 0;
 
 double globalLowerBound = 0;
 
+int global_num_subs = 0;
+
 double calculateInitialLowerBound(unsigned int * weights, unsigned int * profits) {
 	double currProfit = 0;
 	double currWeight = 0;
@@ -149,6 +151,9 @@ int findFirstRemaining(std::vector<SubProblem> repo[]) {
 }
 
 void branch(SubProblem s, unsigned int* weights, unsigned int* profits, std::vector<SubProblem> repo[]) {
+
+	global_num_subs ++;
+
 	//Sub-problem is overweight, terminate
 	if(s.currentTotalWeight > MAX_CAPACITY) {
 		return;
@@ -332,7 +337,11 @@ int main(int argc, char * argv[]) {
 			cudaFree((void*)d_profits);
 			return -1;
 		}
-
+		
+		int * d_global_num_subs;
+		cudaMalloc((void**) & d_global_num_subs, sizeof(int));
+		cudaMemcpy(d_global_num_subs, &global_num_subs, sizeof(int), cudaMemcpyHostToDevice);
+		app.getParams()->global_num_subs = d_global_num_subs;
 		app.getParams()->weights = d_weights;
 		app.getParams()->profits = d_profits;
 
@@ -343,6 +352,9 @@ int main(int argc, char * argv[]) {
 
 		unsigned int outsize = outBuffer.size();
 		std::cout << "got " << outsize << " outputs " << std::endl;
+
+		cudaMemcpy(&global_num_subs, d_global_num_subs, sizeof(int), cudaMemcpyDeviceToHost);
+		std::cout << "subproblems: " << global_num_subs << std::endl;
         	if (outsize != 0) {
 			outBuffer.get(output_ptr, outsize);
 			if (index == (int) (MAX_ITEMS / PIPELINE_NODES) - 1) {
