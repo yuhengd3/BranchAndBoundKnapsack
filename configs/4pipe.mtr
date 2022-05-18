@@ -45,7 +45,7 @@ Param maxCapacity : int;
 Param maxItems : int;
 Param numBlocks: int;
 Param blockLowerBounds: double *;
-Param global_num_subs: int * ;
+// Param global_num_subs: int * ;
 
 
-NodeState A::num_subs : unsigned *;
+// NodeState A::num_subs : unsigned *;

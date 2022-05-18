@@ -50,8 +50,6 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 	int toPush = 1;
 	if (toPush && tid >= nInputs) {
 		toPush = 0;
-	} else {
-		getState()->num_subs[tid] += 1;
 	}
 
 	SubProblem leftSub, rightSub;
@@ -85,31 +83,4 @@ A<InputView>::run(SubProblem const & inputItem, unsigned int nInputs)
 
 	push(leftSub, pushLeft);
 	push(rightSub, pushRight);
-}
-
-__MDECL__
-void BranchAndBoundKnapsack_dev::
-A<InputView>::init()
-{
-	if (threadIdx.x == 0) {
-		cudaMalloc((void**) &(getState()->num_subs), THREADS_PER_BLOCK * sizeof(unsigned));
-		for (unsigned i = 0; i != THREADS_PER_BLOCK; i++) {
-			getState()->num_subs[i] = 0;
-		}
-	}
-}
-
-
-__MDECL__
-void BranchAndBoundKnapsack_dev::
-A<InputView>::cleanup()
-{
-	if (threadIdx.x == 0) {
-		long total = 0;
-		for (unsigned i = 0; i != THREADS_PER_BLOCK; i++) {
-			total += getState()->num_subs[i];
-		}
-		// cudaFree(getState()->num_subs);
-		atomicAdd(getAppParams()->global_num_subs, total);
-	}
 }
